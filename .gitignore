@@ -1,0 +1,8 @@
+node_modules/
+.DS_Store
+android/.gradle/
+android/build/
+android/local.properties
+ios/.build/
+ios/.swiftpm/
+*.tgz

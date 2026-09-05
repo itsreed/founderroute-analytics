@@ -1,0 +1,12 @@
+{
+  "name": "@founderroute/analytics",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "exports": { ".": { "types": "./index.d.ts", "default": "./index.js" }, "./react": "./react.js", "./next": "./next.js" },
+  "files": ["*.js", "*.d.ts", "LICENSE"],
+  "peerDependencies": { "react": ">=18 <20", "next": ">=15 <17" },
+  "peerDependenciesMeta": { "react": { "optional": true }, "next": { "optional": true } },
+  "license": "MIT"
+}

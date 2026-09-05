@@ -1,0 +1,17 @@
+buildscript { repositories { google(); mavenCentral() }; dependencies { classpath 'com.android.tools.build:gradle:8.9.2'; classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:2.1.20' } }
+apply plugin: 'com.android.library'
+apply plugin: 'org.jetbrains.kotlin.android'
+android {
+  namespace 'com.founderroute.analytics.reactnative'
+  compileSdk 35
+  defaultConfig { minSdk 24 }
+  compileOptions { coreLibraryDesugaringEnabled true; sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
+  kotlinOptions { jvmTarget = '17' }
+}
+repositories { google(); mavenCentral() }
+dependencies {
+  implementation 'com.facebook.react:react-android'
+  implementation 'androidx.work:work-runtime-ktx:2.10.1'
+  implementation 'androidx.lifecycle:lifecycle-process:2.8.7'
+  coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.5'
+}

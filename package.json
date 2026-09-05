@@ -1,0 +1,9 @@
+{
+  "name": "founderroute-analytics-sdk",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "workspaces": ["packages/*"],
+  "scripts": { "test": "node --test test/*.test.mjs", "build": "node scripts/build.mjs" },
+  "license": "MIT"
+}

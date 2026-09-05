@@ -1,0 +1,22 @@
+import { createHash, createHmac, randomUUID } from "node:crypto";
+export function signIdentity({secret,propertyId,userId,expiresInSeconds=3600}) {
+  if(!secret?.startsWith("fr_sk_")||!propertyId||!userId)throw new Error("A server key, property, and opaque user ID are required.");
+  const payload=Buffer.from(JSON.stringify({property_id:propertyId,user_id:userId,exp:Math.floor(Date.now()/1000)+Math.min(604800,Math.max(60,expiresInSeconds))})).toString("base64url");
+  const signingKey=createHash("sha256").update(secret).digest("hex");
+  return `${payload}.${createHmac("sha256",signingKey).update(payload).digest("base64url")}`;
+}
+export class FounderRouteServer {
+  constructor({secret,endpoint,fetch:transport=globalThis.fetch}) { if(!secret?.startsWith("fr_sk_"))throw new Error("A server ingest secret is required.");this.secret=secret;this.endpoint=endpoint.replace(/\/$/,"");this.fetch=transport; }
+  event(name,{consent,userId,anonymousId,eventId=randomUUID(),outcomeId,accountId,occurredAt=new Date().toISOString(),traits={},properties={}}) {
+    if(consent!==true)return null;
+    if(!userId||!anonymousId)throw new Error("Pass a stable user ID and the originating anonymous ID.");
+    return {event_id:eventId,protocol:1,name,kind:"custom",consent:true,occurred_at:occurredAt,anonymous_id:anonymousId,user_id:userId,...(outcomeId?{outcome_id:outcomeId}:{}),...(accountId?{account_id:accountId}:{}),traits,properties,context:{sdk:"node",sdk_version:"0.1.0"}};
+  }
+  async send(events) {
+    const batch=events.filter(Boolean);if(!batch.length)return {results:[]};
+    if(batch.length>50)throw new Error("Send at most 50 events per batch.");
+    const body=JSON.stringify({events:batch});if(Buffer.byteLength(body)>65536)throw new Error("Batch exceeds 64 KiB.");
+    const response=await this.fetch(`${this.endpoint}/api/analytics/v1/server-events`,{method:"POST",headers:{"Content-Type":"application/json",Authorization:`Bearer ${this.secret}`},body});
+    const result=await response.json();if(!response.ok){const error=new Error(result.error??"Analytics delivery failed");error.status=response.status;error.retryAfter=response.headers.get("Retry-After");throw error;}return result;
+  }
+}
