@@ -32,13 +32,15 @@ class DeliveryTest {
             override fun getInputStream():ByteArrayInputStream { val batch=JSONObject(output.toString("UTF-8")).getJSONArray("events");val results=JSONArray();for(i in 0 until batch.length())results.put(JSONObject().put("event_id",batch.getJSONObject(i).getString("event_id")).put("status","accepted"));return ByteArrayInputStream(JSONObject().put("results",results).toString().toByteArray()) }
         }}
         try{
-            client.setConsent(true);client.track("document_published",outcomeId="offline-operation");client.flush()
+            client.setConsent(true);client.setCampaignContext("example://welcome?fr_link=01234567-89ab-4cde-8fab-0123456789ab&utm_source=distribution&email=private@example.com");client.track("document_published",outcomeId="offline-operation");client.flush()
             var state=diagnostics(client);assertEquals(1,state.getInt("queued"));assertEquals("network_unavailable",state.getString("lastError"))
             val original=synchronized(bodies){bodies.first().getJSONArray("events").getJSONObject(0).getString("event_id")}
             offline=false
             client.onStart(object:androidx.lifecycle.LifecycleOwner{override val lifecycle:androidx.lifecycle.Lifecycle get()=throw UnsupportedOperationException()})
             state=diagnostics(client);assertEquals(0,state.getInt("queued"));assertEquals(1,state.getInt("acknowledged"))
             val delivered=synchronized(bodies){bodies.last().getJSONArray("events").getJSONObject(0).getString("event_id")};assertEquals(original,delivered)
+            val campaign=synchronized(bodies){bodies.last().getJSONArray("events").getJSONObject(0).getJSONObject("context")}
+            assertEquals("distribution",campaign.getString("utm_source"));assertEquals("01234567-89ab-4cde-8fab-0123456789ab",campaign.getString("campaign_link"));assertFalse(campaign.has("email"))
             client.setConsent(false);assertTrue(diagnostics(client).isNull("anonymousId"))
         }finally{FounderRouteAnalytics.connectionFactory={it.openConnection() as HttpURLConnection};client.setConsent(false)}
     }

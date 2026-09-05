@@ -36,10 +36,14 @@ final class DeliveryTests: XCTestCase {
         sdk.configure(key: "fr_pk_" + UUID().uuidString, endpoint: "https://collector.example", appId: "example.fixture")
         sdk.track("before_consent"); sdk.flush()
         let before = await diagnostics(sdk); XCTAssertEqual(before["queued"] as? Int, 0); XCTAssertTrue(before["anonymousId"] is NSNull)
-        sdk.setConsent(true); sdk.track("published", outcomeId: "operation-1"); sdk.flush()
+        sdk.setConsent(true); sdk.setCampaignContext("example://welcome?fr_link=01234567-89ab-4cde-8fab-0123456789ab&utm_source=distribution&email=private@example.com"); sdk.track("published", outcomeId: "operation-1"); sdk.flush()
         for _ in 0..<100 { if (await diagnostics(sdk))["acknowledged"] as? Int == 1 { break }; try await Task.sleep(nanoseconds: 20_000_000) }
         let delivered = await diagnostics(sdk); XCTAssertEqual(delivered["acknowledged"] as? Int, 1); XCTAssertEqual(delivered["queued"] as? Int, 0)
         XCTAssertEqual(CollectorProtocol.received.first?["outcome_id"] as? String, "operation-1")
+        let campaign = CollectorProtocol.received.first?["context"] as? [String:Any]
+        XCTAssertEqual(campaign?["campaign_link"] as? String,"01234567-89ab-4cde-8fab-0123456789ab")
+        XCTAssertEqual(campaign?["utm_source"] as? String,"distribution")
+        XCTAssertNil(campaign?["email"])
         sdk.setConsent(false); let withdrawn = await diagnostics(sdk); XCTAssertTrue(withdrawn["anonymousId"] is NSNull)
     }
     func testOfflineQueueSurvivesNewClientWithSameConsentAndEventIdentity() async throws {

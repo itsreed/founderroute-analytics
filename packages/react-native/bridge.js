@@ -10,6 +10,7 @@ export function createBridge(native, platform, options) {
     setAccount: id => native.setAccount(id ?? null),
     track: (name, properties = {}, {outcomeId} = {}) => native.track(name, properties, outcomeId ?? null),
     screen: name => native.screen(name),
+    setCampaignContext: url => native.setCampaignContext(url),
     reset: () => native.reset(),
     flush: () => native.flush(),
     getDiagnostics: () => native.getDiagnostics(),

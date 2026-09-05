@@ -8,6 +8,7 @@ public final class FounderRouteAnalytics: @unchecked Sendable {
     private let work = DispatchQueue(label: "com.founderroute.analytics", qos: .utility)
     private var key = "", endpoint = "", appId = ""
     private var verificationId: String?
+    private var campaign: [String:Any] = [:]
     private var consent = false, sending = false, foreground = true
     private var anonymousId: String?, userId: String?, accountId: String?, identityToken: String?
     private var traits: [String: Any] = [:], allowedTraits: Set<String> = [], allowedProperties: Set<String> = []
@@ -47,7 +48,7 @@ public final class FounderRouteAnalytics: @unchecked Sendable {
             self.consent = granted; self.generation += 1
             if !granted {
                 self.task?.cancel(); self.timer?.cancel(); self.timer = nil; self.events = []; self.anonymousId = nil
-                self.userId = nil; self.accountId = nil; self.identityToken = nil; self.traits = [:]
+                self.userId = nil; self.accountId = nil; self.identityToken = nil; self.traits = [:]; self.campaign = [:]
                 if let file = self.fileURL { try? FileManager.default.removeItem(at: file) }; return
             }
             if let file = self.fileURL, let data = try? Data(contentsOf: file), let saved = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] {
@@ -79,6 +80,17 @@ public final class FounderRouteAnalytics: @unchecked Sendable {
     private func resetIdentity() { anonymousId = UUID().uuidString; userId = nil; accountId = nil; identityToken = nil; traits = [:]; sessionId = UUID().uuidString; lastActivity = .distantPast }
     public func track(_ name: String, properties: [String: Any] = [:], outcomeId: String? = nil) { work.async { self.enqueue(name, kind: "custom", properties: properties, outcomeId: outcomeId) } }
     public func screen(_ name: String) { work.async { self.enqueue("screen_view", kind: "screen", properties: [:], context: ["screen": String(name.prefix(150))]) } }
+    /// Supply an installed-app deep link after consent; this does not infer app-store attribution.
+    public func setCampaignContext(_ url: String) { work.async {
+        guard self.consent, let items = URLComponents(string:url)?.queryItems else { return }
+        var next: [String:Any] = [:]
+        for item in items {
+            guard let value = item.value else { continue }
+            if let limit = ["utm_source":100,"utm_medium":100,"utm_campaign":150,"utm_content":150][item.name] { next[item.name] = String(value.prefix(limit)) }
+            if item.name == "fr_link", let id = UUID(uuidString:value) { next["campaign_link"] = id.uuidString.lowercased() }
+        }
+        self.campaign = next
+    } }
     public func flush() { work.async { self.deliver() } }
     public func getDiagnostics(_ completion: @escaping ([String: Any]) -> Void) {
         work.async { let result: [String: Any] = ["consent": self.consent, "queued": self.events.count, "dropped": self.dropped, "rejected": self.rejected, "acknowledged": self.acknowledged, "anonymousId": self.anonymousId.map { $0 as Any } ?? NSNull(), "lastError": self.lastError.map { $0 as Any } ?? NSNull()]; completion(result) }
@@ -96,6 +108,7 @@ public final class FounderRouteAnalytics: @unchecked Sendable {
         let now = Date(); if now.timeIntervalSince(lastActivity) >= 1800 { sessionId = UUID().uuidString }; lastActivity = now
         var ctx: [String: Any] = ["sdk": "ios", "sdk_version": "0.1.0", "app_id": appId]
         ctx["verification_id"] = verificationId
+        for (key, value) in campaign { ctx[key] = value }
         for (key, value) in context { ctx[key] = value }
         var event: [String: Any] = ["event_id": UUID().uuidString, "protocol": 1, "name": name, "kind": kind, "occurred_at": ISO8601DateFormatter().string(from: now), "anonymous_id": anonymousId, "session_id": sessionId, "consent": true, "properties": sanitize(properties, allowed: allowedProperties), "traits": sanitize(traits, allowed: allowedTraits), "context": ctx]
         event["user_id"] = userId; event["identity_token"] = identityToken; event["account_id"] = accountId; event["outcome_id"] = outcomeId

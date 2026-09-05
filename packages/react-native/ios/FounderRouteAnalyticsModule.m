@@ -6,6 +6,7 @@ RCT_EXTERN_METHOD(identify:(NSString *)identifier token:(NSString *)token traits
 RCT_EXTERN_METHOD(setAccount:(NSString *)identifier)
 RCT_EXTERN_METHOD(track:(NSString *)name properties:(NSDictionary *)properties outcomeId:(NSString *)outcomeId)
 RCT_EXTERN_METHOD(screen:(NSString *)name)
+RCT_EXTERN_METHOD(setCampaignContext:(NSString *)url)
 RCT_EXTERN_METHOD(reset)
 RCT_EXTERN_METHOD(flush)
 RCT_EXTERN_METHOD(getDiagnostics:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject)

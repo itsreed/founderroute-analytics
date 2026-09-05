@@ -3,7 +3,16 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "workspaces": ["packages/*"],
-  "scripts": { "test": "node --test test/*.test.mjs", "build": "node scripts/build.mjs" },
-  "license": "MIT"
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "test": "node --test test/*.test.mjs",
+    "test:browser": "node --test e2e/browser.spec.mjs",
+    "build": "node scripts/build.mjs"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "playwright": "1.63.0"
+  }
 }

@@ -14,6 +14,7 @@ class FounderRouteAnalyticsModule(private val context:ReactApplicationContext):R
     @ReactMethod fun setAccount(id:String?){client?.setAccount(id)}
     @ReactMethod fun track(name:String,properties:ReadableMap,outcomeId:String?){client?.track(name,JSONObject(properties.toHashMap()),outcomeId)}
     @ReactMethod fun screen(name:String){client?.screen(name)}
+    @ReactMethod fun setCampaignContext(url:String){client?.setCampaignContext(url)}
     @ReactMethod fun reset(){client?.reset()}
     @ReactMethod fun flush(){client?.flush()}
     @ReactMethod fun getDiagnostics(promise:Promise){val analytics=client;if(analytics==null){promise.reject("not_initialized","Initialize FounderRoute first.");return};analytics.getDiagnostics{data->val result=Arguments.createMap();data.keys().forEach{key->when(val v=data.get(key)){is Boolean->result.putBoolean(key,v);is Number->result.putDouble(key,v.toDouble());JSONObject.NULL->result.putNull(key);else->result.putString(key,v.toString())}};promise.resolve(result)}}

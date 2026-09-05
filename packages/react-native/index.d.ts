@@ -5,6 +5,7 @@ export interface Client {
   setAccount(id:string|null):void;
   track(name:string,properties?:Record<string,string|number|boolean|null>,options?:{outcomeId?:string}):void;
   screen(name:string):void; reset():void; flush():void;
+  setCampaignContext(url:string):void;
   getDiagnostics():Promise<{consent:boolean;queued:number;dropped:number;anonymousId:string|null}>;
 }
 export function init(options:Options):Client;

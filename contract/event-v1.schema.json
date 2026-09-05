@@ -86,7 +86,8 @@
           "propertyNames": {
             "pattern": "^[a-zA-Z][a-zA-Z0-9_]{0,63}$"
           },
-          "default": {}
+          "default": {},
+          "maxProperties": 30
         },
         "traits": {
           "type": "object",
@@ -110,7 +111,8 @@
           "propertyNames": {
             "pattern": "^[a-zA-Z][a-zA-Z0-9_]{0,63}$"
           },
-          "default": {}
+          "default": {},
+          "maxProperties": 30
         },
         "context": {
           "type": "object",

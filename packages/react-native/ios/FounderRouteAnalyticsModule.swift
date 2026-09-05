@@ -11,6 +11,7 @@ final class FounderRouteAnalyticsModule: NSObject {
     @objc func setAccount(_ id: String?) { analytics.setAccount(id) }
     @objc func track(_ name: String, properties: [String: Any], outcomeId: String?) { analytics.track(name, properties: properties, outcomeId: outcomeId) }
     @objc func screen(_ name: String) { analytics.screen(name) }
+    @objc func setCampaignContext(_ url: String) { analytics.setCampaignContext(url) }
     @objc func reset() { analytics.reset() }
     @objc func flush() { analytics.flush() }
     @objc func getDiagnostics(_ resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) { analytics.getDiagnostics { resolve($0) } }

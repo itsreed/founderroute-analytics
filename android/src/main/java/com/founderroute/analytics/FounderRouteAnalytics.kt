@@ -50,13 +50,14 @@ class FounderRouteAnalytics private constructor(private val context: Context, pr
     private var consent = false; private var foreground = true; private var events = mutableListOf<JSONObject>()
     private var anonymousId: String? = null; private var userId: String? = null; private var accountId: String? = null; private var token: String? = null
     private var traits = JSONObject(); private var session = ""; private var lastActivity = 0L
+    private var campaign = JSONObject()
     private var dropped = 0; private var rejected = 0; private var acknowledged = 0; private var lastError: String? = null; private var retryAt = 0L; private var failures = 0
     private val file get() = File(context.noBackupFilesDir,"founderroute-${key.takeLast(16)}.json")
     init { executor.scheduleWithFixedDelay({ if(consent) { if(foreground) enqueue("fr_session","session",JSONObject(),JSONObject().put("active_ms",15000)); deliver() } },15,15,TimeUnit.SECONDS) }
     fun setConsent(granted: Boolean) { permitted.set(granted); if(!granted)activeConnection?.disconnect(); executor.execute {
         if(consent==granted)return@execute
         consent=granted
-        if(!granted) { events.clear(); anonymousId=null; userId=null; accountId=null; token=null; traits=JSONObject(); file.delete(); WorkManager.getInstance(context).cancelUniqueWork("founderroute-delivery"); return@execute }
+        if(!granted) { events.clear(); anonymousId=null; userId=null; accountId=null; token=null; traits=JSONObject(); campaign=JSONObject(); file.delete(); WorkManager.getInstance(context).cancelUniqueWork("founderroute-delivery"); return@execute }
         try { if(file.exists()) { val saved=JSONObject(file.readText()); dropped=saved.optInt("dropped",0); anonymousId=saved.optString("anonymous_id").takeIf{it.isNotBlank()}; val queue=saved.optJSONArray("events")?:JSONArray(); events=(0 until queue.length()).map { queue.getJSONObject(it) }.toMutableList() } } catch(_:Exception) { lastError="storage_unavailable" }
         if(anonymousId==null)anonymousId=UUID.randomUUID().toString()
         prune(); persist(); schedule(); deliver()
@@ -67,6 +68,14 @@ class FounderRouteAnalytics private constructor(private val context: Context, pr
     private fun resetIdentity() { anonymousId=UUID.randomUUID().toString();userId=null;accountId=null;token=null;traits=JSONObject();session=UUID.randomUUID().toString();lastActivity=0 }
     fun track(name:String, properties:JSONObject=JSONObject(), outcomeId:String?=null) { val snapshot=JSONObject(properties.toString());executor.execute { enqueue(name,"custom",snapshot,outcomeId=outcomeId) } }
     fun screen(name:String) { executor.execute { enqueue("screen_view","screen",JSONObject(),JSONObject().put("screen",name.take(150))) } }
+    /** Pass an installed-app deep link only after consent. No app-store attribution is inferred. */
+    fun setCampaignContext(url:String) { executor.execute {
+        if(!consent||!permitted.get())return@execute
+        val uri=android.net.Uri.parse(url);val next=JSONObject()
+        for((key,limit) in mapOf("utm_source" to 100,"utm_medium" to 100,"utm_campaign" to 150,"utm_content" to 150)) uri.getQueryParameter(key)?.let{next.put(key,it.take(limit))}
+        uri.getQueryParameter("fr_link")?.let { try { next.put("campaign_link",UUID.fromString(it).toString()) } catch(_:Exception){} }
+        campaign=next
+    } }
     fun flush() { executor.execute { deliver() } }
     fun flushForWorker():Boolean = executor.submit(Callable {
         val deadline=System.currentTimeMillis()+25000
@@ -80,6 +89,7 @@ class FounderRouteAnalytics private constructor(private val context: Context, pr
         val now=System.currentTimeMillis();if(now-lastActivity>=1800000)session=UUID.randomUUID().toString();lastActivity=now
         val ctx=JSONObject().put("sdk","android").put("sdk_version","0.1.0").put("app_id",appId);extra.keys().forEach { ctx.put(it,extra.get(it)) }
         verificationId?.let{ctx.put("verification_id",it)}
+        campaign.keys().forEach { ctx.put(it,campaign.get(it)) }
         val event=JSONObject().put("event_id",UUID.randomUUID().toString()).put("protocol",1).put("name",name).put("kind",kind).put("occurred_at",timestamp(now)).put("anonymous_id",anonymousId).put("session_id",session).put("consent",true).put("properties",sanitize(properties,allowedProperties)).put("traits",sanitize(traits,allowedTraits)).put("context",ctx)
         userId?.let{event.put("user_id",it)};accountId?.let{event.put("account_id",it)};token?.let{event.put("identity_token",it)};outcomeId?.let{event.put("outcome_id",it)}
         if(event.toString().toByteArray().size>8192){rejected++;lastError="event_too_large";return}
