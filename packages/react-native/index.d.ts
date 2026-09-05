@@ -1,4 +1,4 @@
-export interface Options { endpoint: string; ios: {key:string;appId:string}; android: {key:string;appId:string}; allowedProperties?:string[]; allowedTraits?:string[] }
+export interface Options { endpoint: string; verificationId?:string; ios: {key:string;appId:string}; android: {key:string;appId:string}; allowedProperties?:string[]; allowedTraits?:string[] }
 export interface Client {
   setConsent(granted:boolean):void;
   identify(id:string,options?:{token?:string;traits?:Record<string,string|number|boolean|null>}):void;

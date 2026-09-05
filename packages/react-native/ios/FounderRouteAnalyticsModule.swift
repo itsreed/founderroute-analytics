@@ -5,7 +5,7 @@ import React
 final class FounderRouteAnalyticsModule: NSObject {
     private let analytics = FounderRouteAnalytics.shared
     @objc static func requiresMainQueueSetup() -> Bool { false }
-    @objc func configure(_ key: String, endpoint: String, appId: String, properties: [String], traits: [String]) { analytics.configure(key: key, endpoint: endpoint, appId: appId, allowedProperties: properties, allowedTraits: traits) }
+    @objc func configure(_ key: String, endpoint: String, appId: String, properties: [String], traits: [String], verificationId: String?) { analytics.configure(key: key, endpoint: endpoint, appId: appId, allowedProperties: properties, allowedTraits: traits, verificationId: verificationId) }
     @objc func setConsent(_ value: Bool) { analytics.setConsent(value) }
     @objc func identify(_ id: String, token: String?, traits: [String: Any]) { analytics.identify(id, token: token, traits: traits) }
     @objc func setAccount(_ id: String?) { analytics.setAccount(id) }

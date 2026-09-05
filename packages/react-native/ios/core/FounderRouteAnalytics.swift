@@ -7,6 +7,7 @@ public final class FounderRouteAnalytics: @unchecked Sendable {
     public static let shared = FounderRouteAnalytics()
     private let work = DispatchQueue(label: "com.founderroute.analytics", qos: .utility)
     private var key = "", endpoint = "", appId = ""
+    private var verificationId: String?
     private var consent = false, sending = false, foreground = true
     private var anonymousId: String?, userId: String?, accountId: String?, identityToken: String?
     private var traits: [String: Any] = [:], allowedTraits: Set<String> = [], allowedProperties: Set<String> = []
@@ -19,11 +20,12 @@ public final class FounderRouteAnalytics: @unchecked Sendable {
     private let transport: URLSession
     public init(transport: URLSession = .shared) { self.transport = transport }
 
-    public func configure(key: String, endpoint: String, appId: String, allowedProperties: [String] = [], allowedTraits: [String] = []) {
+    public func configure(key: String, endpoint: String, appId: String, allowedProperties: [String] = [], allowedTraits: [String] = [], verificationId: String? = nil) {
         work.async {
             guard self.key.isEmpty else { return }
             guard key.hasPrefix("fr_pk_"), let url = URL(string: endpoint), url.scheme == "https" || url.host == "localhost" else { self.lastError = "invalid_configuration"; return }
             self.key = key; self.endpoint = endpoint.trimmingCharacters(in: CharacterSet(charactersIn: "/")); self.appId = appId
+            self.verificationId = verificationId
             self.allowedProperties = Set(allowedProperties); self.allowedTraits = Set(allowedTraits)
             #if canImport(UIKit)
             self.observers.append(NotificationCenter.default.addObserver(forName: UIApplication.didEnterBackgroundNotification, object: nil, queue: nil) { [weak self] _ in
@@ -93,6 +95,7 @@ public final class FounderRouteAnalytics: @unchecked Sendable {
         guard consent, let anonymousId else { return }
         let now = Date(); if now.timeIntervalSince(lastActivity) >= 1800 { sessionId = UUID().uuidString }; lastActivity = now
         var ctx: [String: Any] = ["sdk": "ios", "sdk_version": "0.1.0", "app_id": appId]
+        ctx["verification_id"] = verificationId
         for (key, value) in context { ctx[key] = value }
         var event: [String: Any] = ["event_id": UUID().uuidString, "protocol": 1, "name": name, "kind": kind, "occurred_at": ISO8601DateFormatter().string(from: now), "anonymous_id": anonymousId, "session_id": sessionId, "consent": true, "properties": sanitize(properties, allowed: allowedProperties), "traits": sanitize(traits, allowed: allowedTraits), "context": ctx]
         event["user_id"] = userId; event["identity_token"] = identityToken; event["account_id"] = accountId; event["outcome_id"] = outcomeId

@@ -1,5 +1,5 @@
 export type Scalar = string | number | boolean | null;
-export type AnalyticsOptions = { key: string; endpoint: string; autoPage?: boolean; allowedProperties?: string[]; allowedTraits?: string[]; storage?: Pick<Storage,"getItem"|"setItem"|"removeItem">; fetch?: typeof fetch };
+export type AnalyticsOptions = { key: string; endpoint: string; verificationId?: string; autoPage?: boolean; allowedProperties?: string[]; allowedTraits?: string[]; storage?: Pick<Storage,"getItem"|"setItem"|"removeItem">; fetch?: typeof fetch };
 export class FounderRouteAnalytics {
   constructor(options: AnalyticsOptions);
   setConsent(granted: boolean): void;

@@ -1,0 +1,1 @@
+module.exports = { dependency: { platforms: { android: { packageImportPath: 'import com.founderroute.analytics.reactnative.FounderRouteAnalyticsPackage;', packageInstance: 'new FounderRouteAnalyticsPackage()' } } } };

@@ -61,7 +61,7 @@ class FounderRouteAnalytics {
       event_id:uuid(),protocol:1,name,kind:extra.kind ?? "custom",occurred_at:new Date(now).toISOString(),anonymous_id:this.identity,
       ...(this.user ? {user_id:this.user} : {}),...(this.token ? {identity_token:this.token} : {}),...(this.account ? {account_id:this.account} : {}),
       session_id:this.session.id,consent:true,properties:clean(properties,this.options.allowedProperties),traits:clean(this.traits,this.options.allowedTraits),
-      context:{sdk:"browser",sdk_version:VERSION,...this.campaignContext(),...extra.context},...(extra.outcomeId ? {outcome_id:extra.outcomeId} : {}),
+      context:{sdk:"browser",sdk_version:VERSION,...(this.options.verificationId?{verification_id:this.options.verificationId}:{}),...this.campaignContext(),...extra.context},...(extra.outcomeId ? {outcome_id:extra.outcomeId} : {}),
     };
     if (encoder.encode(JSON.stringify(event)).length>8192) { this.rejected++; this.lastError="event_too_large"; return null; }
     this.queue.push(event); this.prune(); this.persist(); return event.event_id;

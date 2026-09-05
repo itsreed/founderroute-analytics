@@ -7,10 +7,10 @@ export function signIdentity({secret,propertyId,userId,expiresInSeconds=3600}) {
 }
 export class FounderRouteServer {
   constructor({secret,endpoint,fetch:transport=globalThis.fetch}) { if(!secret?.startsWith("fr_sk_"))throw new Error("A server ingest secret is required.");this.secret=secret;this.endpoint=endpoint.replace(/\/$/,"");this.fetch=transport; }
-  event(name,{consent,userId,anonymousId,eventId=randomUUID(),outcomeId,accountId,occurredAt=new Date().toISOString(),traits={},properties={}}) {
+  event(name,{consent,userId,anonymousId,eventId=randomUUID(),outcomeId,accountId,occurredAt=new Date().toISOString(),traits={},properties={},verificationId}) {
     if(consent!==true)return null;
     if(!userId||!anonymousId)throw new Error("Pass a stable user ID and the originating anonymous ID.");
-    return {event_id:eventId,protocol:1,name,kind:"custom",consent:true,occurred_at:occurredAt,anonymous_id:anonymousId,user_id:userId,...(outcomeId?{outcome_id:outcomeId}:{}),...(accountId?{account_id:accountId}:{}),traits,properties,context:{sdk:"node",sdk_version:"0.1.0"}};
+    return {event_id:eventId,protocol:1,name,kind:"custom",consent:true,occurred_at:occurredAt,anonymous_id:anonymousId,user_id:userId,...(outcomeId?{outcome_id:outcomeId}:{}),...(accountId?{account_id:accountId}:{}),traits,properties,context:{sdk:"node",sdk_version:"0.1.0",...(verificationId?{verification_id:verificationId}:{})}};
   }
   async send(events) {
     const batch=events.filter(Boolean);if(!batch.length)return {results:[]};

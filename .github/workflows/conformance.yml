@@ -3,6 +3,48 @@ on: [push, pull_request, workflow_dispatch]
 permissions:
   contents: read
 jobs:
+  react-native:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-15]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-java@v4
+        if: runner.os == 'Linux'
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+        if: runner.os == 'Linux'
+      - name: Create consumer application from the packaged SDK
+        shell: bash
+        run: |
+          npm run build
+          npm pack ./packages/react-native --pack-destination "$RUNNER_TEMP"
+          npx --yes @react-native-community/cli@20.0.0 init AnalyticsExample --version 0.81.4 --pm npm --skip-install --skip-git-init --directory "$RUNNER_TEMP/AnalyticsExample"
+          cd "$RUNNER_TEMP/AnalyticsExample"
+          npm install "$RUNNER_TEMP/founderroute-analytics-react-native-0.1.0.tgz"
+          npx react-native config > "$RUNNER_TEMP/react-native-config.json"
+          node -e 'const fs=require("fs");const c=JSON.parse(fs.readFileSync(process.env.RUNNER_TEMP+"/react-native-config.json"));if(!c.dependencies["@founderroute/analytics-react-native"]?.platforms?.android || !c.dependencies["@founderroute/analytics-react-native"]?.platforms?.ios)process.exit(1)'
+      - name: Build Android consumer with autolinking
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          cd "$RUNNER_TEMP/AnalyticsExample/android"
+          ./gradlew --no-daemon assembleDebug -PreactNativeArchitectures=x86_64
+      - name: Build iOS consumer with autolinking
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          cd "$RUNNER_TEMP/AnalyticsExample/ios"
+          pod install
+          xcodebuild -workspace AnalyticsExample.xcworkspace -scheme AnalyticsExample -destination 'generic/platform=iOS Simulator' -sdk iphonesimulator CODE_SIGNING_ALLOWED=NO build > "$RUNNER_TEMP/react-native-ios.log" 2>&1 || { tail -150 "$RUNNER_TEMP/react-native-ios.log"; exit 1; }
   javascript:
     runs-on: ubuntu-latest
     steps:

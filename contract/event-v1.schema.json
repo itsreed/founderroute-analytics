@@ -115,6 +115,10 @@
         "context": {
           "type": "object",
           "properties": {
+            "verification_id": {
+              "type": "string",
+              "format": "uuid"
+            },
             "path": {
               "type": "string",
               "maxLength": 500

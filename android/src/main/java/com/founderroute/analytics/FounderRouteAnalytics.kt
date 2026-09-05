@@ -17,13 +17,13 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.Callable
 import java.util.concurrent.atomic.AtomicBoolean
 
-class FounderRouteAnalytics private constructor(private val context: Context, private val key: String, private val endpoint: String, private val appId: String, private val allowedProperties: Set<String>, private val allowedTraits: Set<String>) : DefaultLifecycleObserver {
+class FounderRouteAnalytics private constructor(private val context: Context, private val key: String, private val endpoint: String, private val appId: String, private val allowedProperties: Set<String>, private val allowedTraits: Set<String>,private val verificationId:String?) : DefaultLifecycleObserver {
     companion object {
         @Volatile internal var connectionFactory:(URL)->HttpURLConnection = { it.openConnection() as HttpURLConnection }
         @Volatile private var instance: FounderRouteAnalytics? = null
-        @Synchronized fun init(context: Context, key: String, endpoint: String, appId: String, allowedProperties: Set<String> = emptySet(), allowedTraits: Set<String> = emptySet()): FounderRouteAnalytics {
+        @Synchronized fun init(context: Context, key: String, endpoint: String, appId: String, allowedProperties: Set<String> = emptySet(), allowedTraits: Set<String> = emptySet(),verificationId:String?=null): FounderRouteAnalytics {
             require(key.startsWith("fr_pk_")); require(endpoint.startsWith("https://") || endpoint.startsWith("http://localhost"))
-            return instance ?: FounderRouteAnalytics(context.applicationContext,key,endpoint.trimEnd('/'),appId,allowedProperties,allowedTraits).also { instance=it; android.os.Handler(android.os.Looper.getMainLooper()).post { ProcessLifecycleOwner.get().lifecycle.addObserver(it) } }
+            return instance ?: FounderRouteAnalytics(context.applicationContext,key,endpoint.trimEnd('/'),appId,allowedProperties,allowedTraits,verificationId).also { instance=it; android.os.Handler(android.os.Looper.getMainLooper()).post { ProcessLifecycleOwner.get().lifecycle.addObserver(it) } }
         }
         fun current() = instance
         fun restore(context:Context,data:Data):FounderRouteAnalytics? {
@@ -33,7 +33,7 @@ class FounderRouteAnalytics private constructor(private val context: Context, pr
             val saved=try{JSONObject(file.readText())}catch(_:Exception){return null}
             if(!saved.optBoolean("consent",false))return null
             return init(context,key,data.getString("endpoint")?:return null,data.getString("appId")?:return null,
-              (data.getStringArray("properties")?:emptyArray()).toSet(),(data.getStringArray("traits")?:emptyArray()).toSet()).also{it.setConsent(true)}
+              (data.getStringArray("properties")?:emptyArray()).toSet(),(data.getStringArray("traits")?:emptyArray()).toSet(),data.getString("verificationId")).also{it.setConsent(true)}
         }
     }
     private val executor = Executors.newSingleThreadScheduledExecutor()
@@ -71,6 +71,7 @@ class FounderRouteAnalytics private constructor(private val context: Context, pr
         if(!consent||!permitted.get()||anonymousId==null)return
         val now=System.currentTimeMillis();if(now-lastActivity>=1800000)session=UUID.randomUUID().toString();lastActivity=now
         val ctx=JSONObject().put("sdk","android").put("sdk_version","0.1.0").put("app_id",appId);extra.keys().forEach { ctx.put(it,extra.get(it)) }
+        verificationId?.let{ctx.put("verification_id",it)}
         val event=JSONObject().put("event_id",UUID.randomUUID().toString()).put("protocol",1).put("name",name).put("kind",kind).put("occurred_at",Instant.ofEpochMilli(now).toString()).put("anonymous_id",anonymousId).put("session_id",session).put("consent",true).put("properties",sanitize(properties,allowedProperties)).put("traits",sanitize(traits,allowedTraits)).put("context",ctx)
         userId?.let{event.put("user_id",it)};accountId?.let{event.put("account_id",it)};token?.let{event.put("identity_token",it)};outcomeId?.let{event.put("outcome_id",it)}
         if(event.toString().toByteArray().size>8192){rejected++;lastError="event_too_large";return}
@@ -82,7 +83,7 @@ class FounderRouteAnalytics private constructor(private val context: Context, pr
         while(events.size>10000||JSONArray(events).toString().toByteArray().size>10*1024*1024){events.removeAt(0);dropped++}
     }
     private fun persist() { if(!consent||!permitted.get())return;try { val temp=File(file.path+".tmp");temp.writeText(JSONObject().put("consent",true).put("dropped",dropped).put("anonymous_id",anonymousId).put("events",JSONArray(events)).toString()); if(!temp.renameTo(file)){file.writeText(temp.readText());temp.delete()} }catch(_:Exception){lastError="storage_unavailable"} }
-    private fun schedule() { val constraints=Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build();val request=OneTimeWorkRequestBuilder<AnalyticsDeliveryWorker>().setInputData(workDataOf("key" to key,"endpoint" to endpoint,"appId" to appId,"properties" to allowedProperties.toTypedArray(),"traits" to allowedTraits.toTypedArray())).setConstraints(constraints).setBackoffCriteria(BackoffPolicy.EXPONENTIAL,30,TimeUnit.SECONDS).build();WorkManager.getInstance(context).enqueueUniqueWork("founderroute-delivery",ExistingWorkPolicy.KEEP,request) }
+    private fun schedule() { val constraints=Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build();val request=OneTimeWorkRequestBuilder<AnalyticsDeliveryWorker>().setInputData(workDataOf("key" to key,"endpoint" to endpoint,"appId" to appId,"properties" to allowedProperties.toTypedArray(),"traits" to allowedTraits.toTypedArray(),"verificationId" to verificationId)).setConstraints(constraints).setBackoffCriteria(BackoffPolicy.EXPONENTIAL,30,TimeUnit.SECONDS).build();WorkManager.getInstance(context).enqueueUniqueWork("founderroute-delivery",ExistingWorkPolicy.KEEP,request) }
     private fun deliver() {
         if(!consent||!permitted.get()||System.currentTimeMillis()<retryAt)return
         prune();val batch=mutableListOf<JSONObject>();for(event in events.take(50)){if(JSONObject().put("key",key).put("events",JSONArray(batch+event)).toString().toByteArray().size>65536)break;batch.add(event)};if(batch.isEmpty())return

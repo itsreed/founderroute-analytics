@@ -8,7 +8,7 @@ import org.json.JSONObject
 class FounderRouteAnalyticsModule(private val context:ReactApplicationContext):ReactContextBaseJavaModule(context) {
     override fun getName()="FounderRouteAnalyticsModule"
     private var client:FounderRouteAnalytics?=null
-    @ReactMethod fun configure(key:String,endpoint:String,appId:String,properties:ReadableArray,traits:ReadableArray) { client=FounderRouteAnalytics.init(context,key,endpoint,appId,properties.toArrayList().map{it.toString()}.toSet(),traits.toArrayList().map{it.toString()}.toSet()) }
+    @ReactMethod fun configure(key:String,endpoint:String,appId:String,properties:ReadableArray,traits:ReadableArray,verificationId:String?) { client=FounderRouteAnalytics.init(context,key,endpoint,appId,properties.toArrayList().map{it.toString()}.toSet(),traits.toArrayList().map{it.toString()}.toSet(),verificationId) }
     @ReactMethod fun setConsent(value:Boolean){client?.setConsent(value)}
     @ReactMethod fun identify(id:String,token:String?,traits:ReadableMap){client?.identify(id,token,JSONObject(traits.toHashMap()))}
     @ReactMethod fun setAccount(id:String?){client?.setAccount(id)}

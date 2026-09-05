@@ -5,6 +5,6 @@
   "type": "module",
   "main": "index.js",
   "types": "index.d.ts",
-  "files": ["*.js", "*.d.ts", "*.podspec", "android", "ios", "LICENSE"],
+  "files": ["*.js", "*.cjs", "*.d.ts", "*.podspec", "android", "ios", "LICENSE"],
   "peerDependencies": {"react": ">=18 <20", "react-native": ">=0.76 <1"}
 }
