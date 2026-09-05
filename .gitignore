@@ -5,4 +5,8 @@ android/build/
 android/local.properties
 ios/.build/
 ios/.swiftpm/
+.build/
+.swiftpm/
 *.tgz
+examples/android/build/
+examples/ios/*.xcodeproj/

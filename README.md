@@ -9,7 +9,7 @@ MIT-licensed customer SDKs for FounderRoute's native analytics. This repository 
 | Browser, React, Next.js | `packages/browser` | `@founderroute/analytics@0.1.0` |
 | Node server | `packages/node` | `@founderroute/analytics-node@0.1.0` |
 | React Native | `packages/react-native` | `@founderroute/analytics-react-native@0.1.0` |
-| iOS | `ios/Package.swift` | Swift Package Manager, pin a release tag |
+| iOS | `Package.swift` | Swift Package Manager repository URL, pin a release tag |
 | Android | `android` | `app.founderroute:analytics-android:0.1.0` |
 
 Run `npm run build` and `npm test`. Build creates the pinned browser script in `dist/0.1.0/analytics.js` and packages the same native implementations into the React Native bridge. Do not also initialize a second native collector in a React Native application.

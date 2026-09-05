@@ -1,0 +1,22 @@
+name: AnalyticsExample
+options:
+  bundleIdPrefix: example.founderroute
+packages:
+  FounderRouteAnalytics:
+    path: ../..
+targets:
+  AnalyticsExample:
+    type: application
+    platform: iOS
+    deploymentTarget: '15.0'
+    sources:
+      - path: AnalyticsExample.swift
+      - path: ExampleApp.swift
+    dependencies:
+      - package: FounderRouteAnalytics
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: example.founderroute
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        SWIFT_VERSION: '5.9'

@@ -40,8 +40,15 @@ jobs:
           npx --yes @react-native-community/cli@20.0.0 init AnalyticsExample --version 0.81.4 --pm npm --skip-install --skip-git-init --directory "$RUNNER_TEMP/AnalyticsExample"
           cd "$RUNNER_TEMP/AnalyticsExample"
           npm install "$RUNNER_TEMP/founderroute-analytics-react-native-0.1.0.tgz"
+          cp "$GITHUB_WORKSPACE/examples/react-native/App.jsx" ./AnalyticsExample.jsx
+          cat > App.tsx <<'EXAMPLE'
+          import React from 'react';
+          import Example from './AnalyticsExample';
+          export default function App(){return <Example configuration={{endpoint:'https://collector.example.invalid',ios:{key:'fr_pk_REPLACE_WITH_PUBLIC_IOS_KEY',appId:'example.founderroute'},android:{key:'fr_pk_REPLACE_WITH_PUBLIC_ANDROID_KEY',appId:'example.founderroute'}}}/>;}
+          EXAMPLE
           npx react-native config > "$RUNNER_TEMP/react-native-config.json"
           node -e 'const fs=require("fs");const c=JSON.parse(fs.readFileSync(process.env.RUNNER_TEMP+"/react-native-config.json"));if(!c.dependencies["@founderroute/analytics-react-native"]?.platforms?.android || !c.dependencies["@founderroute/analytics-react-native"]?.platforms?.ios)process.exit(1)'
+          npx react-native bundle --platform android --dev false --entry-file index.js --bundle-output "$RUNNER_TEMP/analytics-example.bundle"
       - name: Build Android consumer with autolinking
         if: runner.os == 'Linux'
         shell: bash
@@ -69,9 +76,14 @@ jobs:
     runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
-      - run: swift test --package-path ios
+      - run: swift test
       - run: xcodebuild -scheme FounderRouteAnalytics -destination 'generic/platform=iOS Simulator' -sdk iphonesimulator CODE_SIGNING_ALLOWED=NO build
-        working-directory: ios
+      - name: Build standalone SwiftUI and UIKit example
+        run: |
+          brew install xcodegen
+          cd examples/ios
+          xcodegen generate
+          xcodebuild -project AnalyticsExample.xcodeproj -scheme AnalyticsExample -destination 'generic/platform=iOS Simulator' -sdk iphonesimulator CODE_SIGNING_ALLOWED=NO build > "$RUNNER_TEMP/ios-example.log" 2>&1 || { tail -100 "$RUNNER_TEMP/ios-example.log"; exit 1; }
   android:
     runs-on: ubuntu-latest
     steps:
