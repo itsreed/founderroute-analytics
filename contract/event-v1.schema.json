@@ -1,0 +1,192 @@
+{
+  "$ref": "#/definitions/FounderRouteEventV1",
+  "definitions": {
+    "FounderRouteEventV1": {
+      "type": "object",
+      "properties": {
+        "event_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "protocol": {
+          "type": "number",
+          "const": 1
+        },
+        "name": {
+          "type": "string",
+          "pattern": "^[a-zA-Z][a-zA-Z0-9_.:-]{0,99}$"
+        },
+        "occurred_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "anonymous_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "user_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "account_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "session_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "outcome_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "identity_token": {
+          "type": "string",
+          "maxLength": 2048
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "page",
+            "screen",
+            "custom",
+            "identify",
+            "session"
+          ],
+          "default": "custom"
+        },
+        "consent": {
+          "type": "boolean",
+          "const": true
+        },
+        "properties": {
+          "type": "object",
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 500
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "propertyNames": {
+            "pattern": "^[a-zA-Z][a-zA-Z0-9_]{0,63}$"
+          },
+          "default": {}
+        },
+        "traits": {
+          "type": "object",
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 500
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "propertyNames": {
+            "pattern": "^[a-zA-Z][a-zA-Z0-9_]{0,63}$"
+          },
+          "default": {}
+        },
+        "context": {
+          "type": "object",
+          "properties": {
+            "path": {
+              "type": "string",
+              "maxLength": 500
+            },
+            "screen": {
+              "type": "string",
+              "maxLength": 150
+            },
+            "referrer": {
+              "type": "string",
+              "maxLength": 500
+            },
+            "campaign_link": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "utm_source": {
+              "type": "string",
+              "maxLength": 100
+            },
+            "utm_medium": {
+              "type": "string",
+              "maxLength": 100
+            },
+            "utm_campaign": {
+              "type": "string",
+              "maxLength": 150
+            },
+            "utm_content": {
+              "type": "string",
+              "maxLength": 150
+            },
+            "app_id": {
+              "type": "string",
+              "maxLength": 200
+            },
+            "app_version": {
+              "type": "string",
+              "maxLength": 100
+            },
+            "sdk": {
+              "type": "string",
+              "maxLength": 80
+            },
+            "sdk_version": {
+              "type": "string",
+              "maxLength": 40
+            },
+            "active_ms": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 60000
+            }
+          },
+          "required": [
+            "sdk",
+            "sdk_version"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "event_id",
+        "protocol",
+        "name",
+        "occurred_at",
+        "anonymous_id",
+        "consent",
+        "context"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "$schema": "http://json-schema.org/draft-07/schema#"
+}

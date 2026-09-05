@@ -42,4 +42,26 @@ final class DeliveryTests: XCTestCase {
         XCTAssertEqual(CollectorProtocol.received.first?["outcome_id"] as? String, "operation-1")
         sdk.setConsent(false); let withdrawn = await diagnostics(sdk); XCTAssertTrue(withdrawn["anonymousId"] is NSNull)
     }
+    func testOfflineQueueSurvivesNewClientWithSameConsentAndEventIdentity() async throws {
+        CollectorProtocol.received = []; CollectorProtocol.offline = true
+        let config = URLSessionConfiguration.ephemeral; config.protocolClasses = [CollectorProtocol.self]
+        let key = "fr_pk_" + UUID().uuidString
+        var first: FounderRouteAnalytics? = FounderRouteAnalytics(transport: URLSession(configuration: config))
+        first!.configure(key: key, endpoint: "https://collector.example", appId: "example.fixture")
+        first!.setConsent(true); first!.track("document_published", outcomeId: "offline-operation"); first!.flush()
+        for _ in 0..<100 { if (await diagnostics(first!))["lastError"] as? String == "network_unavailable" { break }; try await Task.sleep(nanoseconds: 20_000_000) }
+        let queued = await diagnostics(first!); XCTAssertEqual(queued["queued"] as? Int, 1)
+        let file = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!.appendingPathComponent("founderroute-\(key.suffix(16)).json")
+        let persisted = try JSONSerialization.jsonObject(with: Data(contentsOf: file)) as! [String: Any]
+        let expectedId = (persisted["events"] as! [[String: Any]])[0]["event_id"] as! String
+        first = nil; CollectorProtocol.offline = false
+        let restarted = FounderRouteAnalytics(transport: URLSession(configuration: config))
+        restarted.configure(key: key, endpoint: "https://collector.example", appId: "example.fixture")
+        // The application restores its existing consent decision after restart.
+        restarted.setConsent(true)
+        for _ in 0..<100 { if (await diagnostics(restarted))["acknowledged"] as? Int == 1 { break }; try await Task.sleep(nanoseconds: 20_000_000) }
+        XCTAssertEqual(CollectorProtocol.received.first?["event_id"] as? String, expectedId)
+        let delivered = await diagnostics(restarted); XCTAssertEqual(delivered["queued"] as? Int, 0)
+        restarted.setConsent(false); _ = await diagnostics(restarted)
+    }
 }

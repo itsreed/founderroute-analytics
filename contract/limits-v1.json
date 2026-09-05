@@ -1,0 +1,10 @@
+{
+  "batchBytes": 65536,
+  "eventBytes": 8192,
+  "batchEvents": 50,
+  "properties": 10,
+  "lateDays": 7,
+  "rawDays": 90,
+  "historyMonths": 13,
+  "testEvents": 10000
+}

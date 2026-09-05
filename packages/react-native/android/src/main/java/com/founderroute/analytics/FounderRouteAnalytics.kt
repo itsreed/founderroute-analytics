@@ -19,6 +19,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 class FounderRouteAnalytics private constructor(private val context: Context, private val key: String, private val endpoint: String, private val appId: String, private val allowedProperties: Set<String>, private val allowedTraits: Set<String>) : DefaultLifecycleObserver {
     companion object {
+        @Volatile internal var connectionFactory:(URL)->HttpURLConnection = { it.openConnection() as HttpURLConnection }
         @Volatile private var instance: FounderRouteAnalytics? = null
         @Synchronized fun init(context: Context, key: String, endpoint: String, appId: String, allowedProperties: Set<String> = emptySet(), allowedTraits: Set<String> = emptySet()): FounderRouteAnalytics {
             require(key.startsWith("fr_pk_")); require(endpoint.startsWith("https://") || endpoint.startsWith("http://localhost"))
@@ -87,7 +88,7 @@ class FounderRouteAnalytics private constructor(private val context: Context, pr
         prune();val batch=mutableListOf<JSONObject>();for(event in events.take(50)){if(JSONObject().put("key",key).put("events",JSONArray(batch+event)).toString().toByteArray().size>65536)break;batch.add(event)};if(batch.isEmpty())return
         var connection:HttpURLConnection?=null
         try {
-            connection=URL("$endpoint/api/analytics/v1/collect").openConnection() as HttpURLConnection;activeConnection=connection;connection.requestMethod="POST";connection.setRequestProperty("Content-Type","application/json");connection.doOutput=true;connection.connectTimeout=10000;connection.readTimeout=15000
+            connection=connectionFactory(URL("$endpoint/api/analytics/v1/collect"));activeConnection=connection;connection.requestMethod="POST";connection.setRequestProperty("Content-Type","application/json");connection.doOutput=true;connection.connectTimeout=10000;connection.readTimeout=15000
             if(!permitted.get())return
             connection.outputStream.use{it.write(JSONObject().put("key",key).put("events",JSONArray(batch)).toString().toByteArray())}
             val status=connection.responseCode
