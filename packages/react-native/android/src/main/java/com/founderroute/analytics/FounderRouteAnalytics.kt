@@ -10,7 +10,10 @@ import org.json.JSONObject
 import java.io.File
 import java.net.HttpURLConnection
 import java.net.URL
-import java.time.Instant
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import java.util.TimeZone
 import java.util.UUID
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
@@ -19,6 +22,11 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 class FounderRouteAnalytics private constructor(private val context: Context, private val key: String, private val endpoint: String, private val appId: String, private val allowedProperties: Set<String>, private val allowedTraits: Set<String>,private val verificationId:String?) : DefaultLifecycleObserver {
     companion object {
+        private fun timestamp(value:Long):String = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",Locale.US).apply { timeZone=TimeZone.getTimeZone("UTC") }.format(Date(value))
+        private fun timestampMillis(value:String):Long {
+            val pattern=if(value.contains('.')) "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'" else "yyyy-MM-dd'T'HH:mm:ss'Z'"
+            return SimpleDateFormat(pattern,Locale.US).apply { timeZone=TimeZone.getTimeZone("UTC");isLenient=false }.parse(value)?.time ?: 0L
+        }
         @Volatile internal var connectionFactory:(URL)->HttpURLConnection = { it.openConnection() as HttpURLConnection }
         @Volatile private var instance: FounderRouteAnalytics? = null
         @Synchronized fun init(context: Context, key: String, endpoint: String, appId: String, allowedProperties: Set<String> = emptySet(), allowedTraits: Set<String> = emptySet(),verificationId:String?=null): FounderRouteAnalytics {
@@ -72,14 +80,14 @@ class FounderRouteAnalytics private constructor(private val context: Context, pr
         val now=System.currentTimeMillis();if(now-lastActivity>=1800000)session=UUID.randomUUID().toString();lastActivity=now
         val ctx=JSONObject().put("sdk","android").put("sdk_version","0.1.0").put("app_id",appId);extra.keys().forEach { ctx.put(it,extra.get(it)) }
         verificationId?.let{ctx.put("verification_id",it)}
-        val event=JSONObject().put("event_id",UUID.randomUUID().toString()).put("protocol",1).put("name",name).put("kind",kind).put("occurred_at",Instant.ofEpochMilli(now).toString()).put("anonymous_id",anonymousId).put("session_id",session).put("consent",true).put("properties",sanitize(properties,allowedProperties)).put("traits",sanitize(traits,allowedTraits)).put("context",ctx)
+        val event=JSONObject().put("event_id",UUID.randomUUID().toString()).put("protocol",1).put("name",name).put("kind",kind).put("occurred_at",timestamp(now)).put("anonymous_id",anonymousId).put("session_id",session).put("consent",true).put("properties",sanitize(properties,allowedProperties)).put("traits",sanitize(traits,allowedTraits)).put("context",ctx)
         userId?.let{event.put("user_id",it)};accountId?.let{event.put("account_id",it)};token?.let{event.put("identity_token",it)};outcomeId?.let{event.put("outcome_id",it)}
         if(event.toString().toByteArray().size>8192){rejected++;lastError="event_too_large";return}
         events.add(event);prune();persist();schedule()
     }
     private fun prune() {
         val cutoff=System.currentTimeMillis()-7*86400000L;val size=events.size
-        events.removeAll { try { Instant.parse(it.getString("occurred_at")).toEpochMilli()<cutoff } catch(_:Exception){true} };dropped+=size-events.size
+        events.removeAll { try { timestampMillis(it.getString("occurred_at"))<cutoff } catch(_:Exception){true} };dropped+=size-events.size
         while(events.size>10000||JSONArray(events).toString().toByteArray().size>10*1024*1024){events.removeAt(0);dropped++}
     }
     private fun persist() { if(!consent||!permitted.get())return;try { val temp=File(file.path+".tmp");temp.writeText(JSONObject().put("consent",true).put("dropped",dropped).put("anonymous_id",anonymousId).put("events",JSONArray(events)).toString()); if(!temp.renameTo(file)){file.writeText(temp.readText());temp.delete()} }catch(_:Exception){lastError="storage_unavailable"} }

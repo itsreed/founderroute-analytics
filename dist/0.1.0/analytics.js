@@ -152,9 +152,10 @@ class FounderRouteAnalytics {
   }
   async decorateLink(url,destinationPropertyId) {
     if(!this.consent)return url;
-    const response=await (this.options.fetch??fetch)(`${this.endpoint}/api/analytics/v1/link`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({consent:true,key:this.options.key,anonymousId:this.identity,destinationPropertyId})});
+    const destination=new URL(url,globalThis.location?.href);if(!["http:","https:"].includes(destination.protocol)||destination.username||destination.password)return url;
+    const response=await (this.options.fetch??fetch)(`${this.endpoint}/api/analytics/v1/link`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({consent:true,key:this.options.key,anonymousId:this.identity,destinationPropertyId,destinationUrl:destination.origin})});
     if(!response.ok)return url;
-    const {token}=await response.json();const result=new URL(url);result.searchParams.set("fr_handoff",token);return result.toString();
+    const {token}=await response.json();destination.searchParams.set("fr_handoff",token);return destination.toString();
   }
   async consumeHandoff(token) {
     if(!this.consent)return;

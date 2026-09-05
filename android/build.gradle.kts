@@ -10,12 +10,11 @@ android {
     namespace = "com.founderroute.analytics"
     compileSdk = 35
     defaultConfig { minSdk = 24; testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner" }
-    compileOptions { isCoreLibraryDesugaringEnabled = true; sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }
+    compileOptions { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }
     kotlinOptions { jvmTarget = "17" }
     publishing { singleVariant("release") { withSourcesJar() } }
 }
 dependencies {
-    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
     implementation("androidx.work:work-runtime-ktx:2.10.1")
     implementation("androidx.lifecycle:lifecycle-process:2.8.7")
     testImplementation("junit:junit:4.13.2")
