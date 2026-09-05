@@ -4,7 +4,7 @@ plugins {
     id("maven-publish")
     id("signing")
 }
-group = "com.founderroute"
+group = "app.founderroute"
 version = "0.1.0"
 android {
     namespace = "com.founderroute.analytics"

@@ -10,7 +10,7 @@ MIT-licensed customer SDKs for FounderRoute's native analytics. This repository 
 | Node server | `packages/node` | `@founderroute/analytics-node@0.1.0` |
 | React Native | `packages/react-native` | `@founderroute/analytics-react-native@0.1.0` |
 | iOS | `ios/Package.swift` | Swift Package Manager, pin a release tag |
-| Android | `android` | `com.founderroute:analytics-android:0.1.0` |
+| Android | `android` | `app.founderroute:analytics-android:0.1.0` |
 
 Run `npm run build` and `npm test`. Build creates the pinned browser script in `dist/0.1.0/analytics.js` and packages the same native implementations into the React Native bridge. Do not also initialize a second native collector in a React Native application.
 
@@ -75,7 +75,7 @@ The included Apple privacy manifest declares analytics product interaction and u
 
 ## Release checklist
 
-1. Confirm npm scope and Maven Central namespace ownership; configure registry credentials in repository secrets, never source files.
+1. Use the confirmed npm scope `@founderroute` and Maven Central namespace `app.founderroute`; confirm registry publishing access; configure registry credentials in repository secrets, never source files.
 2. Pass native build/device, offline/restart, consent, and server conformance tests.
 3. Pin compatible versions of every package and protocol fixture together.
 4. Publish npm packages, signed Maven artifacts, and an immutable Swift tag; attach the versioned script to the release and host it on the FounderRoute collector origin.
