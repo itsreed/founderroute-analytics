@@ -4,7 +4,7 @@ Pod::Spec.new do |s|
   s.name = "FounderRouteAnalytics"
   s.version = package["version"]
   s.summary = "Native consent-first FounderRoute Analytics for React Native"
-  s.homepage = "https://github.com/elharrakrachid217-cloud/founderroute-analytics"
+  s.homepage = "https://github.com/itsreed/founderroute-analytics"
   s.license = "MIT"
   s.author = "FounderRoute"
   s.source = { :git => s.homepage + ".git", :tag => "v#{s.version}" }

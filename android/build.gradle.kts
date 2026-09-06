@@ -28,10 +28,10 @@ afterEvaluate {
                 from(components["release"]); artifactId = "analytics-android"
                 pom {
                     name.set("FounderRoute Analytics"); description.set("Consent-first native FounderRoute analytics SDK")
-                    url.set("https://github.com/elharrakrachid217-cloud/founderroute-analytics")
+                    url.set("https://github.com/itsreed/founderroute-analytics")
                     licenses { license { name.set("MIT"); url.set("https://opensource.org/licenses/MIT") } }
                     developers { developer { id.set("founderroute"); name.set("FounderRoute") } }
-                    scm { url.set("https://github.com/elharrakrachid217-cloud/founderroute-analytics") }
+                    scm { url.set("https://github.com/itsreed/founderroute-analytics") }
                 }
             }
         }
