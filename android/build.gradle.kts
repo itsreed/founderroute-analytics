@@ -1,3 +1,6 @@
+import org.gradle.api.publish.maven.MavenPublication
+import org.gradle.jvm.tasks.Jar
+
 plugins {
     id("com.android.library") version "8.9.2"
     id("org.jetbrains.kotlin.android") version "2.1.20"
@@ -5,7 +8,7 @@ plugins {
     id("signing")
 }
 group = "app.founderroute"
-version = "0.1.0"
+version = "0.1.0-beta01"
 android {
     namespace = "com.founderroute.analytics"
     compileSdk = 35
@@ -21,19 +24,44 @@ dependencies {
     androidTestImplementation("androidx.test:runner:1.6.2")
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
 }
+val javadocJar by tasks.registering(Jar::class) {
+    archiveClassifier.set("javadoc")
+    from("src/main/java")
+}
+
 afterEvaluate {
     publishing {
         publications {
             create<MavenPublication>("release") {
-                from(components["release"]); artifactId = "analytics-android"
+                from(components["release"])
+                artifact(javadocJar)
+                artifactId = "analytics-android"
                 pom {
                     name.set("FounderRoute Analytics"); description.set("Consent-first native FounderRoute analytics SDK")
                     url.set("https://github.com/itsreed/founderroute-analytics")
                     licenses { license { name.set("MIT"); url.set("https://opensource.org/licenses/MIT") } }
-                    developers { developer { id.set("founderroute"); name.set("FounderRoute") } }
-                    scm { url.set("https://github.com/itsreed/founderroute-analytics") }
+                    developers { developer { id.set("founderroute"); name.set("FounderRoute"); url.set("https://founderroute.app") } }
+                    scm {
+                        connection.set("scm:git:git://github.com/itsreed/founderroute-analytics.git")
+                        developerConnection.set("scm:git:ssh://github.com/itsreed/founderroute-analytics.git")
+                        url.set("https://github.com/itsreed/founderroute-analytics")
+                    }
                 }
             }
+        }
+        repositories {
+            maven {
+                name = "centralBundle"
+                url = uri(layout.buildDirectory.dir("central-bundle"))
+            }
+        }
+    }
+    signing {
+        val signingKey = System.getenv("MAVEN_SIGNING_KEY")
+        val signingPassword = System.getenv("MAVEN_SIGNING_PASSWORD")
+        if (!signingKey.isNullOrBlank()) {
+            useInMemoryPgpKeys(signingKey, signingPassword)
+            sign(publishing.publications["release"])
         }
     }
 }

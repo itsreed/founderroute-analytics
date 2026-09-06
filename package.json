@@ -1,7 +1,7 @@
 {
   "name": "founderroute-analytics-sdk",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.1.0-beta.1",
   "type": "module",
   "workspaces": [
     "packages/*"
@@ -9,7 +9,8 @@
   "scripts": {
     "test": "node --test test/*.test.mjs",
     "test:browser": "node --test e2e/browser.spec.mjs",
-    "build": "node scripts/build.mjs"
+    "build": "node scripts/build.mjs",
+    "release:check": "node scripts/release-check.mjs"
   },
   "license": "MIT",
   "devDependencies": {

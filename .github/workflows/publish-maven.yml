@@ -1,0 +1,67 @@
+name: Stage Maven Central beta
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  stage:
+    runs-on: ubuntu-latest
+    environment: maven-release
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: android-actions/setup-android@v3
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.11.1"
+      - run: npm run release:check
+      - name: Check release credentials
+        shell: bash
+        env:
+          MAVEN_CENTRAL_USERNAME: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+          MAVEN_CENTRAL_PASSWORD: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+          MAVEN_SIGNING_KEY: ${{ secrets.MAVEN_SIGNING_KEY }}
+          MAVEN_SIGNING_PASSWORD: ${{ secrets.MAVEN_SIGNING_PASSWORD }}
+        run: |
+          for name in MAVEN_CENTRAL_USERNAME MAVEN_CENTRAL_PASSWORD MAVEN_SIGNING_KEY MAVEN_SIGNING_PASSWORD; do
+            test -n "${!name}" || { echo "Missing GitHub secret: $name"; exit 1; }
+          done
+      - name: Build signed Maven repository
+        env:
+          MAVEN_SIGNING_KEY: ${{ secrets.MAVEN_SIGNING_KEY }}
+          MAVEN_SIGNING_PASSWORD: ${{ secrets.MAVEN_SIGNING_PASSWORD }}
+        run: gradle --no-daemon -p android clean test publishReleasePublicationToCentralBundleRepository
+      - name: Add required checksums and create bundle
+        shell: bash
+        run: |
+          cd android/build/central-bundle
+          while IFS= read -r -d '' file; do
+            md5sum "$file" | awk '{print $1}' > "$file.md5"
+            sha1sum "$file" | awk '{print $1}' > "$file.sha1"
+            sha256sum "$file" | awk '{print $1}' > "$file.sha256"
+            sha512sum "$file" | awk '{print $1}' > "$file.sha512"
+          done < <(find . -type f ! -name '*.asc' ! -name '*.md5' ! -name '*.sha1' ! -name '*.sha256' ! -name '*.sha512' -print0)
+          zip -r "$RUNNER_TEMP/founderroute-analytics-android-0.1.0-beta01.zip" app
+      - name: Upload for Maven Central validation
+        shell: bash
+        env:
+          MAVEN_CENTRAL_USERNAME: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+          MAVEN_CENTRAL_PASSWORD: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+        run: |
+          AUTH="$(printf '%s:%s' "$MAVEN_CENTRAL_USERNAME" "$MAVEN_CENTRAL_PASSWORD" | base64 -w0)"
+          DEPLOYMENT_ID="$(curl --fail-with-body --silent --show-error \
+            --request POST \
+            --header "Authorization: Bearer $AUTH" \
+            --form "bundle=@$RUNNER_TEMP/founderroute-analytics-android-0.1.0-beta01.zip" \
+            'https://central.sonatype.com/api/v1/publisher/upload?name=FounderRoute%20Analytics%200.1.0-beta01&publishingType=USER_MANAGED')"
+          echo "Maven Central deployment staged: $DEPLOYMENT_ID"
+          echo "Review validation and publish it from the Maven Central Deployments page."
