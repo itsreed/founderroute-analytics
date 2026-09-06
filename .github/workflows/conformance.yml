@@ -36,10 +36,10 @@ jobs:
         shell: bash
         run: |
           npm run build
-          npm pack ./packages/react-native --pack-destination "$RUNNER_TEMP"
+          RN_PACKAGE="$(npm pack ./packages/react-native --pack-destination "$RUNNER_TEMP" | tail -1)"
           npx --yes @react-native-community/cli@20.0.0 init AnalyticsExample --version 0.81.4 --pm npm --skip-install --skip-git-init --directory "$RUNNER_TEMP/AnalyticsExample"
           cd "$RUNNER_TEMP/AnalyticsExample"
-          npm install "$RUNNER_TEMP/founderroute-analytics-react-native-0.1.0.tgz"
+          npm install "$RUNNER_TEMP/$RN_PACKAGE"
           cp "$GITHUB_WORKSPACE/examples/react-native/App.jsx" ./AnalyticsExample.jsx
           cat > App.tsx <<'EXAMPLE'
           import React from 'react';
