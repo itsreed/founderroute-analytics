@@ -10,7 +10,7 @@ export class FounderRouteServer {
   event(name,{consent,userId,anonymousId,eventId=randomUUID(),outcomeId,accountId,occurredAt=new Date().toISOString(),traits={},properties={},verificationId}) {
     if(consent!==true)return null;
     if(!userId||!anonymousId)throw new Error("Pass a stable user ID and the originating anonymous ID.");
-    return {event_id:eventId,protocol:1,name,kind:"custom",consent:true,occurred_at:occurredAt,anonymous_id:anonymousId,user_id:userId,...(outcomeId?{outcome_id:outcomeId}:{}),...(accountId?{account_id:accountId}:{}),traits,properties,context:{sdk:"node",sdk_version:"0.1.0",...(verificationId?{verification_id:verificationId}:{})}};
+    return {event_id:eventId,protocol:1,name,kind:"custom",consent:true,occurred_at:occurredAt,anonymous_id:anonymousId,user_id:userId,...(outcomeId?{outcome_id:outcomeId}:{}),...(accountId?{account_id:accountId}:{}),traits,properties,context:{sdk:"node",sdk_version:"0.1.0-beta.1",...(verificationId?{verification_id:verificationId}:{})}};
   }
   async send(events) {
     const batch=events.filter(Boolean);if(!batch.length)return {results:[]};

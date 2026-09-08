@@ -1,3 +1,4 @@
+(()=>{
 const VERSION = "0.1.0-beta.1";
 const MAX_BYTES = 1024 * 1024;
 const MAX_EVENTS = 1000;
@@ -6,11 +7,11 @@ const encoder = new TextEncoder();
 const sensitive = /password|secret|token|email|phone|authorization|credit.?card|address|full.?name/i;
 const uuid = () => globalThis.crypto.randomUUID();
 const clean = (properties, allowed = []) => Object.fromEntries(Object.entries(properties ?? {}).filter(([k,v]) => allowed.includes(k) && !sensitive.test(k) && (v === null || ["string","boolean","number"].includes(typeof v))).map(([k,v]) => [k,typeof v === "string" ? v.slice(0,500) : v]));
-export function normalizePath(value) {
+function normalizePath(value) {
   return String(value ?? "/").split(/[?#]/)[0].split("/").map(s => /^\d+$/.test(s) || /@|%40/i.test(s) || /^[0-9a-f]{8}-[0-9a-f-]{27}$/i.test(s) ? "[id]" : s).join("/").slice(0,500);
 }
 
-export class FounderRouteAnalytics {
+class FounderRouteAnalytics {
   constructor(options) {
     if (!options?.key || !options?.endpoint) throw new Error("FounderRoute requires a public key and collector origin.");
     this.options = options; this.endpoint = options.endpoint.replace(/\/$/, "");
@@ -165,4 +166,7 @@ export class FounderRouteAnalytics {
 }
 
 const instances=new Map();
-export function init(options){const existing=instances.get(options.key);if(existing)return existing;const client=new FounderRouteAnalytics(options);instances.set(options.key,client);return client;}
+function init(options){const existing=instances.get(options.key);if(existing)return existing;const client=new FounderRouteAnalytics(options);instances.set(options.key,client);return client;}
+
+globalThis.FounderRoute={init};
+})();

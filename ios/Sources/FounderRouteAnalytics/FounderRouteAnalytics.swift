@@ -106,7 +106,7 @@ public final class FounderRouteAnalytics: @unchecked Sendable {
     private func enqueue(_ name: String, kind: String, properties: [String: Any], context: [String: Any] = [:], outcomeId: String? = nil) {
         guard consent, let anonymousId else { return }
         let now = Date(); if now.timeIntervalSince(lastActivity) >= 1800 { sessionId = UUID().uuidString }; lastActivity = now
-        var ctx: [String: Any] = ["sdk": "ios", "sdk_version": "0.1.0", "app_id": appId]
+        var ctx: [String: Any] = ["sdk": "ios", "sdk_version": "0.1.0-beta.1", "app_id": appId]
         ctx["verification_id"] = verificationId
         for (key, value) in campaign { ctx[key] = value }
         for (key, value) in context { ctx[key] = value }

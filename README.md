@@ -2,17 +2,17 @@
 
 MIT-licensed customer SDKs for FounderRoute's native analytics. This repository contains client code, protocol documentation, fixtures, and examples only.
 
-**Development preview.** Version 0.1.0 is not a stable release. Native build, offline/restart, cross-platform reconciliation, privacy, and production capacity gates must pass before stable publication. Package names are intended publication targets; a source checkout is usable before registry publication.
+**Beta release.** Version 0.1.0-beta.1 is intended for controlled testing. Native build, offline/restart, cross-platform reconciliation, privacy, and production capacity gates must pass before stable publication.
 
 | Platform | Source | Intended installation |
 | --- | --- | --- |
-| Browser, React, Next.js | `packages/browser` | `@founderroute/analytics@0.1.0` |
-| Node server | `packages/node` | `@founderroute/analytics-node@0.1.0` |
-| React Native | `packages/react-native` | `@founderroute/analytics-react-native@0.1.0` |
+| Browser, React, Next.js | `packages/browser` | `@founderroute/analytics@0.1.0-beta.1` |
+| Node server | `packages/node` | `@founderroute/analytics-node@0.1.0-beta.1` |
+| React Native | `packages/react-native` | `@founderroute/analytics-react-native@0.1.0-beta.1` |
 | iOS | `Package.swift` | Swift Package Manager repository URL, pin a release tag |
-| Android | `android` | `app.founderroute:analytics-android:0.1.0` |
+| Android | `android` | `app.founderroute:analytics-android:0.1.0-beta01` |
 
-Run `npm run build` and `npm test`. Build creates the pinned browser script in `dist/0.1.0/analytics.js` and packages the same native implementations into the React Native bridge. Do not also initialize a second native collector in a React Native application.
+Run `npm run build` and `npm test`. Build creates the pinned browser script in `dist/0.1.0-beta.1/analytics.js` and packages the same native implementations into the React Native bridge. Do not also initialize a second native collector in a React Native application.
 
 ## Installation
 
@@ -80,3 +80,9 @@ The included Apple privacy manifest declares analytics product interaction and u
 3. Pin compatible versions of every package and protocol fixture together.
 4. Publish npm packages, signed Maven artifacts, and an immutable Swift tag; attach the versioned script to the release and host it on the FounderRoute collector origin.
 5. Preserve the previous release for rollback. Stable publication follows FounderRoute staging reconciliation and capacity gates.
+
+## Publishing the beta
+
+The `Publish npm beta` GitHub workflow publishes all three public npm packages together. The initial run uses a temporary `NPM_TOKEN` repository secret because npm can only attach a trusted publisher after a package exists. After the first run, configure each package to trust `itsreed/founderroute-analytics` and `publish-npm.yml`, then delete `NPM_TOKEN`; later runs use GitHub OIDC.
+
+The `Stage Maven Central beta` workflow builds and signs `app.founderroute:analytics-android:0.1.0-beta01`, then uploads it as a user-managed deployment. Configure the four documented Maven repository secrets first. A successful workflow stages the deployment for validation; the release becomes public only when a publisher approves it on Maven Central.
