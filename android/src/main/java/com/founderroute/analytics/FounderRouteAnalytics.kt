@@ -87,7 +87,7 @@ class FounderRouteAnalytics private constructor(private val context: Context, pr
     fun optOut() { stopRequested.set(true);permitted.set(false);activeConnection?.disconnect();executor.execute{consentState="denied";saveRefusal(true);reconcileCollection()} }
     fun optIn() { stopRequested.set(false);executor.execute{saveRefusal(false);if(consentState=="denied")consentState="not_provided";reconcileCollection()} }
     fun setCollectionMode(mode:String) { require(mode in listOf("automatic","consent"));executor.execute{collectionMode=mode;reconcileCollection()} }
-    fun destroy() { stopRequested.set(true);permitted.set(false);activeConnection?.disconnect();executor.execute{destroyed=true;consent=false;WorkManager.getInstance(context).cancelUniqueWork("founderroute-delivery");android.os.Handler(android.os.Looper.getMainLooper()).post{ProcessLifecycleOwner.get().lifecycle.removeObserver(this)};synchronized(Companion){if(instance===this)instance=null};executor.shutdown()} }
+    fun destroy() { synchronized(Companion){if(instance===this)instance=null};stopRequested.set(true);permitted.set(false);activeConnection?.disconnect();executor.execute{destroyed=true;consent=false;WorkManager.getInstance(context).cancelUniqueWork("founderroute-delivery");android.os.Handler(android.os.Looper.getMainLooper()).post{ProcessLifecycleOwner.get().lifecycle.removeObserver(this)};synchronized(Companion){if(instance===this)instance=null};executor.shutdown()} }
     private fun reconcileCollection() {
         val enabled=configurationReady&&!stopRequested.get()&&!destroyed&&!refused&&(collectionMode=="automatic"||(collectionMode=="consent"&&consentState=="granted"))
         setCollecting(enabled)

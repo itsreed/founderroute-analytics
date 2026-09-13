@@ -1,7 +1,7 @@
-<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>FounderRoute consent example</title>
+<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>FounderRoute analytics example</title>
 <style>body{font:16px system-ui;margin:4rem auto;max-width:42rem;padding:1rem}button,input{font:inherit}button{margin:.5rem;padding:.6rem}pre{white-space:pre-wrap;background:#f4f4f4;padding:1rem}</style>
-<h1>Consent and product usage</h1><p>Use a registered test property. No events are buffered or sent before you grant consent.</p>
-<label><input id="consent" type="checkbox"> Allow analytics in this example</label><p><button id="navigate">Open editor</button><button id="publish">Publish document</button><button id="logout">Log out</button><button id="flush">Deliver now</button></p><pre id="status" aria-live="polite"></pre>
+<h1>Product usage</h1><p>Use a registered test property in automatic mode. Diagnostics below show delivery status.</p>
+<p><button id="navigate">Open editor</button><button id="publish">Publish document</button><button id="logout">Log out</button><button id="flush">Deliver now</button></p><pre id="status" aria-live="polite"></pre>
 <script type="module">
 import {init} from '/sdk.js';
 const config=await fetch('/config').then(r=>r.json());
@@ -10,11 +10,10 @@ if(!config.key||!config.endpoint){status.textContent='Set FOUNDERROUTE_PUBLIC_KE
 else{
   const analytics=init({...config,allowedProperties:['feature']});
   const show=()=>status.textContent=JSON.stringify(analytics.getDiagnostics(),null,2);
-  document.querySelector('#consent').onchange=e=>{analytics.setConsent(e.target.checked);show();};
   document.querySelector('#navigate').onclick=()=>{history.pushState({},'', '/editor');show();};
   document.querySelector('#publish').onclick=()=>{analytics.track('document_published',{feature:'editor'},{outcomeId:crypto.randomUUID()});show();};
   document.querySelector('#logout').onclick=()=>{analytics.reset();show();};
   document.querySelector('#flush').onclick=async()=>{await analytics.flush();show();};
-  show();
+  await analytics.ready; show();
 }
 </script></html>

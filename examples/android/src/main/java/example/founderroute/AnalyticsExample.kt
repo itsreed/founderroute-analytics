@@ -6,10 +6,7 @@ import com.founderroute.analytics.FounderRouteAnalytics
 import java.util.UUID
 
 @Composable fun AnalyticsExample(analytics:FounderRouteAnalytics) {
-    var consent by remember { mutableStateOf(false) }
     Column {
-        Text("Allow analytics")
-        Switch(checked=consent,onCheckedChange={consent=it;analytics.setConsent(it);if(it)analytics.screen("Home")})
         Button(onClick={analytics.screen("Editor")}){Text("Open editor")}
         Button(onClick={analytics.track("document_published",outcomeId=UUID.randomUUID().toString())}){Text("Publish")}
         Button(onClick={analytics.reset()}){Text("Log out")}

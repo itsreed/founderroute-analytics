@@ -5,7 +5,8 @@ const html=fileURLToPath(new URL('./index.html',import.meta.url));
 const sdk=fileURLToPath(new URL('../../packages/browser/index.js',import.meta.url));
 createServer(async(req,res)=>{
   try{
-    if(req.url==='/config'){res.setHeader('Content-Type','application/json');res.end(JSON.stringify({key:process.env.FOUNDERROUTE_PUBLIC_KEY,endpoint:process.env.FOUNDERROUTE_ORIGIN}));return;}
+    if(req.url==='/config'){res.setHeader('Content-Type','application/json');res.end(JSON.stringify({key:process.env.FOUNDERROUTE_PUBLIC_KEY,endpoint:process.env.FOUNDERROUTE_ORIGIN,propertyId:process.env.FOUNDERROUTE_PROPERTY_ID,environment:'test',collectionMode:'automatic'}));return;}
+    if(req.url==='/collection.js'){res.setHeader('Content-Type','text/javascript');res.end(await readFile(new URL('../../packages/browser/collection.js',import.meta.url)));return;}
     if(req.url==='/sdk.js'){res.setHeader('Content-Type','text/javascript');res.end(await readFile(sdk));return;}
     res.setHeader('Content-Type','text/html');res.end(await readFile(html));
   }catch{res.writeHead(500);res.end('Example could not load.');}
