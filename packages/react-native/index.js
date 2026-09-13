@@ -2,7 +2,10 @@ import { NativeModules, Platform } from "react-native";
 import { createBridge } from "./bridge.js";
 let client;
 export function init(options) {
-  client ??= createBridge(NativeModules.FounderRouteAnalyticsModule, Platform.OS, options);
+  if (!client) {
+    const bridge = createBridge(NativeModules.FounderRouteAnalyticsModule, Platform.OS, options);
+    client = {...bridge, destroy() { bridge.destroy(); client = undefined; }};
+  }
   return client;
 }
 export function navigationAdapter(client, navigationRef) {

@@ -11,7 +11,7 @@ import java.util.concurrent.TimeUnit
 class ConsentTest {
     @Test fun deniedConsentHasNoIdentityOrQueue() {
         val context=InstrumentationRegistry.getInstrumentation().targetContext
-        val sdk=FounderRouteAnalytics.init(context,"fr_pk_fixture_consent","https://collector.example","example.fixture")
+        val sdk=FounderRouteAnalytics.init(context,"fr_pk_fixture_consent","https://collector.example","example.fixture",collectionMode="consent",propertyId="fixture",environment="test")
         sdk.setConsent(false); sdk.track("before_consent"); sdk.flush()
         val complete=CountDownLatch(1)
         sdk.getDiagnostics { result -> assertFalse(result.getBoolean("consent"));assertEquals(0,result.getInt("queued"));assertTrue(result.isNull("anonymousId"));complete.countDown() }

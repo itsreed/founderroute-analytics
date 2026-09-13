@@ -9,6 +9,12 @@ public final class FounderRouteAnalytics: @unchecked Sendable {
     private var key = "", endpoint = "", appId = ""
     private var verificationId: String?
     private var campaign: [String:Any] = [:]
+    private var collectionMode: String?, propertyId: String?, environment: String?
+    private var consentState = "not_provided", refused = false, configurationReady = false, destroyed = false
+    private let permissionLock = NSLock()
+    private var stopRequested = false
+    private func requestStop(_ stop: Bool) { permissionLock.lock(); stopRequested = stop; permissionLock.unlock() }
+    private var stopped: Bool { permissionLock.lock(); defer { permissionLock.unlock() }; return stopRequested }
     private var consent = false, sending = false, foreground = true
     private var anonymousId: String?, userId: String?, accountId: String?, identityToken: String?
     private var traits: [String: Any] = [:], allowedTraits: Set<String> = [], allowedProperties: Set<String> = []
@@ -21,12 +27,19 @@ public final class FounderRouteAnalytics: @unchecked Sendable {
     private let transport: URLSession
     public init(transport: URLSession = .shared) { self.transport = transport }
 
-    public func configure(key: String, endpoint: String, appId: String, allowedProperties: [String] = [], allowedTraits: [String] = [], verificationId: String? = nil) {
+    public func configure(key: String, endpoint: String, appId: String, allowedProperties: [String] = [], allowedTraits: [String] = [], verificationId: String? = nil, collectionMode: String? = nil, propertyId: String? = nil, environment: String? = nil) {
         work.async {
-            guard self.key.isEmpty else { return }
+            guard self.key.isEmpty || self.destroyed else { return }
+            if self.destroyed {
+                self.destroyed = false; self.configurationReady = false; self.refused = false
+                self.consentState = "not_provided"; self.events = []; self.anonymousId = nil
+                self.userId = nil; self.accountId = nil; self.identityToken = nil; self.traits = [:]
+                self.sending = false; self.requestStop(false)
+            }
             guard key.hasPrefix("fr_pk_"), let url = URL(string: endpoint), url.scheme == "https" || url.host == "localhost" else { self.lastError = "invalid_configuration"; return }
             self.key = key; self.endpoint = endpoint.trimmingCharacters(in: CharacterSet(charactersIn: "/")); self.appId = appId
             self.verificationId = verificationId
+            self.propertyId = propertyId; self.environment = environment; self.collectionMode = collectionMode
             self.allowedProperties = Set(allowedProperties); self.allowedTraits = Set(allowedTraits)
             #if canImport(UIKit)
             self.observers.append(NotificationCenter.default.addObserver(forName: UIApplication.didEnterBackgroundNotification, object: nil, queue: nil) { [weak self] _ in
@@ -36,27 +49,82 @@ public final class FounderRouteAnalytics: @unchecked Sendable {
                 self?.work.async { self?.foreground = true; self?.retryAt = .distantPast; self?.deliver() }
             })
             #endif
+            if collectionMode != nil && propertyId != nil && environment != nil { self.finishConfiguration() }
+            else {
+                var components = URLComponents(string: self.endpoint + "/api/analytics/v2/config")!
+                components.queryItems = [URLQueryItem(name: "key", value: key)]
+                self.transport.dataTask(with: components.url!) { data, response, _ in
+                    self.work.async {
+                        guard !self.destroyed, let response = response as? HTTPURLResponse, response.statusCode == 200,
+                              let data, let config = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] else { self.lastError = "configuration_unavailable"; return }
+                        self.propertyId = config["property_id"] as? String; self.environment = config["environment"] as? String
+                        self.collectionMode = collectionMode ?? config["collection_mode"] as? String
+                        self.finishConfiguration()
+                    }
+                }.resume()
+            }
         }
     }
+    private var scope: String { if let propertyId, let environment { return propertyId + "-" + environment }; return String(key.suffix(16)) }
+    private var refusalURL: URL? { fileURL?.appendingPathExtension("refusal") }
+    private func finishConfiguration() {
+        guard let propertyId, propertyId.range(of: "^[a-zA-Z0-9_-]+$", options: .regularExpression) != nil,
+              ["production", "test"].contains(environment ?? ""), ["automatic", "consent"].contains(collectionMode ?? "") else { lastError = "configuration_unavailable"; return }
+        if let refusalURL { refused = refused || FileManager.default.fileExists(atPath: refusalURL.path) }
+        if refused { saveRefusal(true) }
+        configurationReady = true; reconcileCollection()
+    }
+    private func saveRefusal(_ value: Bool) {
+        refused = value
+        do {
+            guard let url = refusalURL else { throw CocoaError(.fileNoSuchFile) }
+            if value {
+                try FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
+                try Data("refused".utf8).write(to: url, options: .atomic)
+            } else if FileManager.default.fileExists(atPath: url.path) { try FileManager.default.removeItem(at: url) }
+        } catch { lastError = "preference_storage_unavailable" }
+    }
+    public func optOut() { requestStop(true); work.async { self.consentState = "denied"; self.saveRefusal(true); self.reconcileCollection() } }
+    public func optIn() { requestStop(false); work.async { self.saveRefusal(false); if self.consentState == "denied" { self.consentState = "not_provided" }; self.reconcileCollection() } }
+    public func setCollectionMode(_ mode: String) { work.async { guard ["automatic", "consent"].contains(mode) else { self.lastError = "invalid_configuration"; return }; self.collectionMode = mode; self.reconcileCollection() } }
+    public func destroy() { requestStop(true); work.async { self.destroyed = true; self.consent = false; self.generation += 1; self.task?.cancel(); self.timer?.cancel(); self.timer = nil; self.observers.forEach { NotificationCenter.default.removeObserver($0) }; self.observers = [] } }
+    private func reconcileCollection() {
+        setCollecting(configurationReady && !destroyed && !stopped && !refused && (collectionMode == "automatic" || (collectionMode == "consent" && consentState == "granted")))
+    }
     private var fileURL: URL? {
+        guard !key.isEmpty else { return nil }
+        return FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first?.appendingPathComponent("founderroute-\(scope).json")
+    }
+    private var legacyFileURL: URL? {
         guard !key.isEmpty else { return nil }
         return FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first?.appendingPathComponent("founderroute-\(key.suffix(16)).json")
     }
     public func setConsent(_ granted: Bool) {
-        work.async {
-            guard granted != self.consent, !self.key.isEmpty else { return }
+        requestStop(!granted)
+        work.async { self.consentState = granted ? "granted" : "denied"; self.saveRefusal(!granted); self.reconcileCollection() }
+    }
+    private func setCollecting(_ requested: Bool) {
+            let granted = requested && !stopped
+            guard !self.key.isEmpty else { return }
+            if !granted && self.refused {
+                if let file = self.fileURL { try? FileManager.default.removeItem(at: file) }
+                if let file = self.legacyFileURL { try? FileManager.default.removeItem(at: file) }
+            }
+            guard granted != self.consent else { return }
             self.consent = granted; self.generation += 1
             if !granted {
                 self.task?.cancel(); self.timer?.cancel(); self.timer = nil; self.events = []; self.anonymousId = nil
                 self.userId = nil; self.accountId = nil; self.identityToken = nil; self.traits = [:]; self.campaign = [:]
                 if let file = self.fileURL { try? FileManager.default.removeItem(at: file) }; return
             }
-            if let file = self.fileURL, let data = try? Data(contentsOf: file), let saved = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] {
+            let restoreFile = self.fileURL.flatMap { FileManager.default.fileExists(atPath: $0.path) ? $0 : self.legacyFileURL }
+            if let file = restoreFile, let data = try? Data(contentsOf: file), let saved = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] {
                 self.dropped = saved["dropped"] as? Int ?? 0
                 self.events = saved["events"] as? [[String: Any]] ?? []; self.anonymousId = saved["anonymous_id"] as? String
             }
             self.anonymousId = self.anonymousId ?? UUID().uuidString
             self.prune(); self.persist()
+            if let legacy = self.legacyFileURL, legacy != self.fileURL, let current = self.fileURL, FileManager.default.fileExists(atPath: current.path) { try? FileManager.default.removeItem(at: legacy) }
             let timer = DispatchSource.makeTimerSource(queue: self.work)
             timer.schedule(deadline: .now() + 15, repeating: 15)
             timer.setEventHandler { [weak self] in
@@ -65,24 +133,23 @@ public final class FounderRouteAnalytics: @unchecked Sendable {
                 self.deliver()
             }
             self.timer = timer; timer.resume(); self.deliver()
-        }
     }
     public func identify(_ userId: String, token: String? = nil, traits: [String: Any] = [:]) {
         work.async {
-            guard self.consent else { return }
+            guard self.consent, !self.stopped else { return }
             if let old = self.userId, old != userId { self.resetIdentity() }
             self.userId = userId; self.identityToken = token; self.traits = traits
             self.enqueue("fr_identify", kind: "identify", properties: [:])
         }
     }
-    public func setAccount(_ id: String?) { work.async { if self.consent { self.accountId = id } } }
-    public func reset() { work.async { if self.consent { self.resetIdentity(); self.persist() } } }
+    public func setAccount(_ id: String?) { work.async { if self.consent && !self.stopped { self.accountId = id } } }
+    public func reset() { work.async { if self.consent && !self.stopped { self.resetIdentity(); self.persist() } } }
     private func resetIdentity() { anonymousId = UUID().uuidString; userId = nil; accountId = nil; identityToken = nil; traits = [:]; sessionId = UUID().uuidString; lastActivity = .distantPast }
     public func track(_ name: String, properties: [String: Any] = [:], outcomeId: String? = nil) { work.async { self.enqueue(name, kind: "custom", properties: properties, outcomeId: outcomeId) } }
     public func screen(_ name: String) { work.async { self.enqueue("screen_view", kind: "screen", properties: [:], context: ["screen": String(name.prefix(150))]) } }
     /// Supply an installed-app deep link after consent; this does not infer app-store attribution.
     public func setCampaignContext(_ url: String) { work.async {
-        guard self.consent, let items = URLComponents(string:url)?.queryItems else { return }
+        guard self.consent, !self.stopped, let items = URLComponents(string:url)?.queryItems else { return }
         var next: [String:Any] = [:]
         for item in items {
             guard let value = item.value else { continue }
@@ -93,7 +160,7 @@ public final class FounderRouteAnalytics: @unchecked Sendable {
     } }
     public func flush() { work.async { self.deliver() } }
     public func getDiagnostics(_ completion: @escaping ([String: Any]) -> Void) {
-        work.async { let result: [String: Any] = ["consent": self.consent, "queued": self.events.count, "dropped": self.dropped, "rejected": self.rejected, "acknowledged": self.acknowledged, "anonymousId": self.anonymousId.map { $0 as Any } ?? NSNull(), "lastError": self.lastError.map { $0 as Any } ?? NSNull()]; completion(result) }
+        work.async { let result: [String: Any] = ["consent": self.consentState == "granted", "collectionMode": self.collectionMode.map { $0 as Any } ?? NSNull(), "consentState": self.consentState, "optedOut": self.refused, "collectionEnabled": self.consent && !self.stopped, "queued": self.events.count, "dropped": self.dropped, "rejected": self.rejected, "acknowledged": self.acknowledged, "anonymousId": self.anonymousId.map { $0 as Any } ?? NSNull(), "lastError": self.lastError.map { $0 as Any } ?? NSNull()]; completion(result) }
     }
     private func sanitize(_ input: [String: Any], allowed: Set<String>) -> [String: Any] {
         var result: [String: Any] = [:]
@@ -104,13 +171,13 @@ public final class FounderRouteAnalytics: @unchecked Sendable {
         return result
     }
     private func enqueue(_ name: String, kind: String, properties: [String: Any], context: [String: Any] = [:], outcomeId: String? = nil) {
-        guard consent, let anonymousId else { return }
+        guard consent, !stopped, let anonymousId else { return }
         let now = Date(); if now.timeIntervalSince(lastActivity) >= 1800 { sessionId = UUID().uuidString }; lastActivity = now
-        var ctx: [String: Any] = ["sdk": "ios", "sdk_version": "0.1.0-beta.1", "app_id": appId]
+        var ctx: [String: Any] = ["sdk": "ios", "sdk_version": "1.0.0-rc.1", "app_id": appId]
         ctx["verification_id"] = verificationId
         for (key, value) in campaign { ctx[key] = value }
         for (key, value) in context { ctx[key] = value }
-        var event: [String: Any] = ["event_id": UUID().uuidString, "protocol": 1, "name": name, "kind": kind, "occurred_at": ISO8601DateFormatter().string(from: now), "anonymous_id": anonymousId, "session_id": sessionId, "consent": true, "properties": sanitize(properties, allowed: allowedProperties), "traits": sanitize(traits, allowed: allowedTraits), "context": ctx]
+        var event: [String: Any] = ["event_id": UUID().uuidString, "protocol": 2, "name": name, "kind": kind, "occurred_at": ISO8601DateFormatter().string(from: now), "anonymous_id": anonymousId, "session_id": sessionId, "collection_mode": collectionMode ?? "consent", "consent_state": consentState == "granted" ? "granted" : "not_provided", "properties": sanitize(properties, allowed: allowedProperties), "traits": sanitize(traits, allowed: allowedTraits), "context": ctx]
         event["user_id"] = userId; event["identity_token"] = identityToken; event["account_id"] = accountId; event["outcome_id"] = outcomeId
         guard let bytes = try? JSONSerialization.data(withJSONObject: event), bytes.count <= 8192 else { rejected += 1; lastError = "event_too_large"; return }
         events.append(event); prune(); persist()
@@ -122,7 +189,7 @@ public final class FounderRouteAnalytics: @unchecked Sendable {
         while events.count > 10000 || ((try? JSONSerialization.data(withJSONObject: events).count) ?? 0) > 10 * 1024 * 1024 { events.removeFirst(); dropped += 1 }
     }
     private func persist() {
-        guard consent, let file = fileURL else { return }
+        guard consent, !stopped, let file = fileURL else { return }
         do {
             try FileManager.default.createDirectory(at: file.deletingLastPathComponent(), withIntermediateDirectories: true)
             let data = try JSONSerialization.data(withJSONObject: ["anonymous_id": anonymousId ?? "", "events": events, "dropped": dropped])
@@ -131,7 +198,7 @@ public final class FounderRouteAnalytics: @unchecked Sendable {
         } catch { lastError = "storage_unavailable" }
     }
     private func deliver() {
-        guard consent, !sending, Date() >= retryAt, let url = URL(string: endpoint + "/api/analytics/v1/collect") else { return }
+        guard consent, !stopped, !sending, Date() >= retryAt, let url = URL(string: endpoint + "/api/analytics/v2/collect") else { return }
         prune(); var batch: [[String: Any]] = []
         for event in events.prefix(50) {
             guard let data = try? JSONSerialization.data(withJSONObject: ["key": key, "events": batch + [event]]), data.count <= 65536 else { break }; batch.append(event)
@@ -142,7 +209,7 @@ public final class FounderRouteAnalytics: @unchecked Sendable {
         task = transport.dataTask(with: request) { [weak self] data, response, error in
             guard let self else { return }
             self.work.async {
-                self.sending = false; guard self.consent, self.generation == currentGeneration else { return }
+                self.sending = false; guard self.consent, !self.stopped, self.generation == currentGeneration else { return }
                 guard error == nil, let response = response as? HTTPURLResponse else { self.retry("network_unavailable"); return }
                 let status = response.statusCode
                 if status == 429 || status >= 500 { self.retry("delivery_\(status)"); return }

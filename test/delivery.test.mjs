@@ -7,27 +7,27 @@ import {createBridge} from "../packages/react-native/bridge.js";
 function setup(fetch){
   const data=new Map();let reads=0,writes=0;
   const storage={getItem:k=>{reads++;return data.get(k)},setItem:(k,v)=>{writes++;data.set(k,v)},removeItem:k=>data.delete(k)};
-  const client=new FounderRouteAnalytics({key:"fr_pk_fixture_key",endpoint:"https://collector.example",autoPage:false,storage,fetch,allowedTraits:["role"],allowedProperties:["feature"]});
+  const client=new FounderRouteAnalytics({key:"fr_pk_fixture_key",endpoint:"https://collector.example",autoPage:false,propertyId:"fixture-property",environment:"test",collectionMode:"consent",storage,fetch,allowedTraits:["role"],allowedProperties:["feature"]});
   return {client,data,storage,counts:()=>({reads,writes})};
 }
 const ack=async(_url,request)=>new Response(JSON.stringify({results:JSON.parse(request.body).events.map(e=>({event_id:e.event_id,status:"accepted"}))}));
-test("denied consent does not read storage, create identity, buffer, or transmit",async()=>{
+test("paused consent does not persist identity, buffer, or transmit",async()=>{
   let sent=0;const {client,counts}=setup(async()=>{sent++;return ack()});
   client.track("before");client.identify("user");client.page("/private");await client.flush();
-  assert.deepEqual(counts(),{reads:0,writes:0});assert.equal(sent,0);assert.equal(client.getDiagnostics().anonymousId,null);assert.equal(client.getDiagnostics().queued,0);
+  assert.equal(counts().writes,0);assert.equal(sent,0);assert.equal(client.getDiagnostics().anonymousId,null);assert.equal(client.getDiagnostics().queued,0);
 });
 test("missing acknowledgement retains event IDs through restart, then removes acknowledged deliveries",async()=>{
   const captured=[];const {client,storage}=setup(async(_url,request)=>{captured.push(JSON.parse(request.body));throw new Error("offline")});
   client.setConsent(true);const id=client.track("published",{feature:"editor"},{outcomeId:"operation-1"});await client.flush();
   assert.equal(client.getDiagnostics().queued,1);
-  const restarted=new FounderRouteAnalytics({key:client.options.key,endpoint:client.endpoint,autoPage:false,storage,fetch:async(url,request)=>{captured.push(JSON.parse(request.body));return ack(url,request)}});
+  const restarted=new FounderRouteAnalytics({key:client.options.key,endpoint:client.endpoint,autoPage:false,propertyId:"fixture-property",environment:"test",collectionMode:"consent",storage,fetch:async(url,request)=>{captured.push(JSON.parse(request.body));return ack(url,request)}});
   restarted.setConsent(true);await restarted.flush();assert.equal(captured[1].events[0].event_id,id);assert.equal(restarted.getDiagnostics().queued,0);
   client.destroy();restarted.destroy();
 });
 test("partial receipts preserve unknown deliveries, withdrawal clears all local state",async()=>{
   const {client,data}=setup(async(_url,request)=>{const [first]=JSON.parse(request.body).events;return new Response(JSON.stringify({results:[{event_id:first.event_id,status:"duplicate"}]}))});
   client.setConsent(true);client.track("one");client.track("two");await client.flush();assert.equal(client.getDiagnostics().queued,1);
-  client.setConsent(false);assert.equal(data.size,0);assert.equal(client.getDiagnostics().anonymousId,null);assert.equal(client.getDiagnostics().queued,0);
+  client.setConsent(false);assert.deepEqual([...data.values()],["refused"]);assert.equal(client.getDiagnostics().anonymousId,null);assert.equal(client.getDiagnostics().queued,0);
 });
 test("queued identities remain fixed across logout and account switching",()=>{
   const {client}=setup(ack);client.setConsent(true);client.identify("first",{traits:{role:"founder",email:"redacted"}});client.setAccount("account-a");client.track("published");client.reset();client.identify("second");client.track("published");
