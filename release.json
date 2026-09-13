@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "version": "1.0.0-rc.1",
+  "status": "candidate",
+  "published": false,
+  "protocol": 2,
+  "supportedProtocols": [
+    1,
+    2
+  ],
+  "repository": "https://github.com/itsreed/founderroute-analytics",
+  "tag": "v1.0.0-rc.1",
+  "npmTag": "next",
+  "packages": {
+    "browser": "@founderroute/analytics",
+    "node": "@founderroute/analytics-node",
+    "reactNative": "@founderroute/analytics-react-native"
+  },
+  "maven": {
+    "group": "app.founderroute",
+    "artifact": "analytics-android",
+    "version": "1.0.0-rc.1"
+  },
+  "hostedScriptPath": "/analytics/1.0.0-rc.1/analytics.js"
+}

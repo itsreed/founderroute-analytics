@@ -1,7 +1,7 @@
 {
   "name": "@founderroute/analytics",
   "version": "1.0.0-rc.1",
-  "description": "Consent-first FounderRoute analytics for browsers, React, and Next.js",
+  "description": "FounderRoute analytics for browsers, React, and Next.js",
   "type": "module",
   "main": "index.js",
   "types": "index.d.ts",
@@ -10,8 +10,14 @@
       "types": "./index.d.ts",
       "default": "./index.js"
     },
-    "./react": "./react.js",
-    "./next": "./next.js"
+    "./react": {
+      "types": "./react.d.ts",
+      "default": "./react.js"
+    },
+    "./next": {
+      "types": "./next.d.ts",
+      "default": "./next.js"
+    }
   },
   "files": [
     "*.js",

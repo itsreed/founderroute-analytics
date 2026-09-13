@@ -114,7 +114,7 @@ public final class FounderRouteAnalytics: @unchecked Sendable {
             guard granted != self.consent else { return }
             self.consent = granted; self.generation += 1
             if !granted {
-                self.task?.cancel(); self.timer?.cancel(); self.timer = nil; self.events = []; self.anonymousId = nil
+                self.task?.cancel(); self.sending = false; self.timer?.cancel(); self.timer = nil; self.events = []; self.anonymousId = nil
                 self.userId = nil; self.accountId = nil; self.identityToken = nil; self.traits = [:]; self.campaign = [:]
                 if let file = self.fileURL { try? FileManager.default.removeItem(at: file) }; return
             }
@@ -210,7 +210,7 @@ public final class FounderRouteAnalytics: @unchecked Sendable {
         task = transport.dataTask(with: request) { [weak self] data, response, error in
             guard let self else { return }
             self.work.async {
-                self.sending = false; guard self.consent, !self.stopped, self.generation == currentGeneration else { return }
+                guard self.generation == currentGeneration else { return }; self.sending = false; guard self.consent, !self.stopped else { return }
                 guard error == nil, let response = response as? HTTPURLResponse else { self.retry("network_unavailable"); return }
                 let status = response.statusCode
                 if status == 429 || status >= 500 { self.retry("delivery_\(status)"); return }

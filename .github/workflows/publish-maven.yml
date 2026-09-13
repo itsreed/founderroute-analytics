@@ -1,4 +1,4 @@
-name: Stage Maven Central beta
+name: Stage Maven Central release
 
 on:
   workflow_dispatch:
@@ -24,6 +24,10 @@ jobs:
         with:
           gradle-version: "8.11.1"
       - run: npm run release:check
+        env:
+          REQUIRE_RELEASE_TAG: "true"
+      - name: Read Maven release version
+        run: node -e 'const fs=require("fs");const r=JSON.parse(fs.readFileSync("release.json"));fs.appendFileSync(process.env.GITHUB_ENV,"MAVEN_VERSION="+r.maven.version+"\n")'
       - name: Check release credentials
         shell: bash
         env:
@@ -50,7 +54,7 @@ jobs:
             sha256sum "$file" | awk '{print $1}' > "$file.sha256"
             sha512sum "$file" | awk '{print $1}' > "$file.sha512"
           done < <(find . -type f ! -name '*.asc' ! -name '*.md5' ! -name '*.sha1' ! -name '*.sha256' ! -name '*.sha512' -print0)
-          zip -r "$RUNNER_TEMP/founderroute-analytics-android-0.1.0-beta01.zip" app
+          zip -r "$RUNNER_TEMP/founderroute-analytics-android-${MAVEN_VERSION}.zip" app
       - name: Upload for Maven Central validation
         shell: bash
         env:
@@ -61,7 +65,7 @@ jobs:
           DEPLOYMENT_ID="$(curl --fail-with-body --silent --show-error \
             --request POST \
             --header "Authorization: Bearer $AUTH" \
-            --form "bundle=@$RUNNER_TEMP/founderroute-analytics-android-0.1.0-beta01.zip" \
-            'https://central.sonatype.com/api/v1/publisher/upload?name=FounderRoute%20Analytics%200.1.0-beta01&publishingType=USER_MANAGED')"
+            --form "bundle=@$RUNNER_TEMP/founderroute-analytics-android-${MAVEN_VERSION}.zip" \
+            "https://central.sonatype.com/api/v1/publisher/upload?name=FounderRoute%20Analytics%20${MAVEN_VERSION}&publishingType=USER_MANAGED")"
           echo "Maven Central deployment staged: $DEPLOYMENT_ID"
           echo "Review validation and publish it from the Maven Central Deployments page."
