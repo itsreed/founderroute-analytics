@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { FounderRouteAnalytics } from '../packages/browser/index.js';
+import { createBridge } from '../packages/react-native/bridge.js';
 import { FounderRouteServer } from '../packages/node/index.js';
 
 test('server permission is scoped to each outcome and preserves legacy callers', () => {
@@ -110,4 +111,14 @@ test('mode changes cannot bypass unresolved property configuration', async () =>
   client.setCollectionMode('automatic');assert.equal(client.track('blocked'),null);
   resolve(new Response(JSON.stringify({property_id:'property-a',environment:'test',collection_mode:'consent'})));
   await client.ready;assert.equal(client.track('still_paused'),null);client.destroy();
+});
+
+
+test('React Native forwards mode, stable property scope and privacy controls', () => {
+  const calls=[];
+  const native=new Proxy({}, {get:(_,name)=>(...args)=>calls.push({name,args})});
+  const client=createBridge(native,'ios',{endpoint:'https://collector.example',collectionMode:'automatic',ios:{key:'fr_pk_test',appId:'example.app',propertyId:'property-a',environment:'test'}});
+  assert.deepEqual(calls[0].args.slice(-3),['automatic','property-a','test']);
+  client.optOut();client.optIn();client.setCollectionMode('consent');client.destroy();
+  assert.deepEqual(calls.slice(1).map(call=>call.name),['optOut','optIn','setCollectionMode','destroy']);
 });

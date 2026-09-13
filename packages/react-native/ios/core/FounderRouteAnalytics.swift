@@ -53,9 +53,10 @@ public final class FounderRouteAnalytics: @unchecked Sendable {
             else {
                 var components = URLComponents(string: self.endpoint + "/api/analytics/v2/config")!
                 components.queryItems = [URLQueryItem(name: "key", value: key)]
+                let configurationGeneration = self.generation
                 self.transport.dataTask(with: components.url!) { data, response, _ in
                     self.work.async {
-                        guard !self.destroyed, let response = response as? HTTPURLResponse, response.statusCode == 200,
+                        guard !self.destroyed, self.generation == configurationGeneration, let response = response as? HTTPURLResponse, response.statusCode == 200,
                               let data, let config = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] else { self.lastError = "configuration_unavailable"; return }
                         self.propertyId = config["property_id"] as? String; self.environment = config["environment"] as? String
                         self.collectionMode = collectionMode ?? config["collection_mode"] as? String

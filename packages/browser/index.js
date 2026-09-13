@@ -68,7 +68,7 @@ export class FounderRouteAnalytics {
     if (granted === this.collecting) return;
     this.collecting = granted; this.generation++;
     if (!this.collecting) {
-      this.controller?.abort(); clearInterval(this.timer); this.timer = null;
+      this.controller?.abort(); this.inFlight = null; clearInterval(this.timer); this.timer = null;
       for (const remove of this.cleanups.splice(0)) remove();
       this.queue = []; this.identity = null; this.session = null; this.user = null; this.token = null; this.account = null; this.traits = {}; this.lastPage = null;
       try { const storage = this.options.storage ?? globalThis.localStorage; storage?.removeItem(this.storageKey); storage?.removeItem(`founderroute:${this.options.key}`); } catch { /* unavailable storage is not fatal */ }
@@ -182,6 +182,7 @@ export class FounderRouteAnalytics {
     if(this.inFlight)return this.inFlight;
     const generation=this.generation; const events=this.batch(); if(!events.length)return;
     this.controller=new AbortController();
+    const delivery = {}; this.delivery = delivery;
     this.inFlight=(async()=>{
       try {
         const response=await (this.options.fetch??globalThis.fetch)(`${this.endpoint}/api/analytics/v2/collect`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({key:this.options.key,events}),signal:this.controller.signal});
@@ -193,8 +194,8 @@ export class FounderRouteAnalytics {
         const acknowledged=new Set();
         for(const receipt of result.results??[]){if(["accepted","duplicate","rejected"].includes(receipt.status))acknowledged.add(receipt.event_id);if(receipt.status==="rejected"){this.rejected++;this.lastError=receipt.reason;}else this.sent++;}
         this.queue=this.queue.filter(e=>!acknowledged.has(e.event_id));this.failures=0;this.retryAt=0;
-      }catch(error){if(error?.name!=="AbortError"){this.lastError="network_unavailable";this.failures++;this.retryAt=Date.now()+Math.min(300000,1000*2**Math.min(this.failures,8));}}
-      finally{if(this.collecting&&this.generation===generation)this.persist();this.inFlight=null;}
+      }catch(error){if(this.collecting&&this.generation===generation&&error?.name!=="AbortError"){this.lastError="network_unavailable";this.failures++;this.retryAt=Date.now()+Math.min(300000,1000*2**Math.min(this.failures,8));}}
+      finally{if(this.collecting&&this.generation===generation)this.persist();if(this.delivery===delivery)this.inFlight=null;}
     })();
     return this.inFlight;
   }
