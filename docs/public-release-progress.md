@@ -16,13 +16,13 @@ published release and must not replace any published beta artifact.
 - Node explicit collection context uses protocol 2; legacy consent callers keep v1.
 - Swift/Android collection modes and persistent refusal are implemented locally;
   React Native forwards the same configuration and controls through native bridges.
-  Native builds and device conformance are still unverified.
-- Browser/Node candidate versions are 1.0.0-rc.1. Other platform package versions are not yet aligned;
-  release version alignment intentionally remains unsatisfied.
+  Native builds and the implemented device tests passed in CI.
+- All candidate packages use 1.0.0-rc.1. release.json and the build integrity manifest
+  pin source/version information; native-copy and version drift checks pass.
 
 ## Verified locally
 
-- SDK unit suite: 18 passed, including legacy-queue migration and paused configuration.
+- SDK unit suite: 19 passed, including legacy-queue migration and paused configuration.
 - Two Chromium scenarios passed: consent pause/grant/withdrawal and automatic
   collection, including cross-tab refusal, reload/key rotation, lost acknowledgements,
   duplicate delivery, no SDK visitor UI, and normalized SPA navigation.
@@ -53,4 +53,12 @@ on the workstation PATH during this pass.
 
 Private backend verification also passes the PostgreSQL-engine migration/replay/
 privacy/cohort suite with mixed v1/v2 events and preserved property defaults.
-Native automatic/refusal tests have been added but not executed on native runtimes.
+Native automatic/refusal tests passed in CI. All six jobs passed at source
+578764e9905293020660d64e2106e8a71544948a:
+https://github.com/itsreed/founderroute-analytics/actions/runs/34775209342
+
+The private app now imports this revision's checksum-verified script and schemas,
+uses its manifest in installation prompts, and has removed its editable SDK copy.
+The app's 12 Analytics tests, type check, targeted lint and production build passed.
+Hosted backend/dashboard verification, broad conformance and public-release gates
+remain open. No registry publishing workflow has been dispatched.
