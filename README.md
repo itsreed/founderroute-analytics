@@ -82,7 +82,7 @@ The included Apple privacy manifest declares analytics product interaction and u
 2. Pass native build/device, offline/restart, consent, and server conformance tests.
 3. Pin compatible versions of every package and protocol fixture together.
 4. Publish npm packages, signed Maven artifacts, and an immutable Swift tag; attach the versioned script to the release and host it on the FounderRoute collector origin.
-5. Preserve the previous release for rollback. Stable publication follows FounderRoute staging reconciliation and capacity gates.
+5. Preserve the previous release for rollback. Stable publication follows the controlled hosted lifecycle and reconciliation checks. Dedicated staging and isolated capacity testing remain deferred; never substitute production load testing for those gates.
 
 ## Publishing a tested release
 
