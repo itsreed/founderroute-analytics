@@ -1,9 +1,9 @@
 # Public release implementation progress
 
-The public-release plan is in progress. These working-tree changes are not a
-published release and must not replace any published beta artifact.
+The public-release plan is in progress. Candidate `1.0.0-rc.1` is published for
+controlled production verification. It is not yet the stable public release.
 
-## Implemented locally
+## Implemented
 
 - Browser collection state separates mode, permission, refusal, and effective collection.
 - Explicit automatic/consent configuration with property/environment refusal scope.
@@ -20,32 +20,40 @@ published release and must not replace any published beta artifact.
 - All candidate packages use 1.0.0-rc.1. release.json and the build integrity manifest
   pin source/version information; native-copy and version drift checks pass.
 
-## Verified locally
+## Verified
 
 - SDK unit suite: 19 passed, including legacy-queue migration and paused configuration.
 - Two Chromium scenarios passed: consent pause/grant/withdrawal and automatic
   collection, including cross-tab refusal, reload/key rotation, lost acknowledgements,
   duplicate delivery, no SDK visitor UI, and normalized SPA navigation.
 - FounderRoute backend contract suite: 8 passed, including protocol 2 metadata.
+- Canonical merge commit `741e6bb6ca55ddee6ccce98f559f41f9b62a9bb6`
+  passed browser, JavaScript, iOS, Android emulator, and React Native Linux/macOS
+  CI: https://github.com/itsreed/founderroute-analytics/actions/runs/35462219925
+- npm packages were published under `next` and installed from the public registry.
+- Swift tag and GitHub prerelease `v1.0.0-rc.1` are public.
+- Signed Maven deployment `86fb1824-9b6e-4c47-a92c-0492f29bc9a6` reached
+  `PUBLISHED`; the public POM returns HTTP 200 from Maven Central:
+  https://repo1.maven.org/maven2/app/founderroute/analytics-android/1.0.0-rc.1/analytics-android-1.0.0-rc.1.pom
 
 ## Required next
 
-1. Expand native automatic/refusal and background restoration fixtures.
-2. Compile and run Swift, Android, React Native consumer/device tests in CI;
-   review native races, lifecycle cleanup, persistence and configuration fallback.
-3. Deploy the private-app v2 routes and validate them against the hosted backend.
+1. Deploy the private-app v2 routes and validate them against the hosted backend.
    The additive protocol-2 migration is live and verified; the application routes
    are not deployed yet.
-4. Complete canonical contract/artifact import, setup manifest, examples and docs.
-5. Run the controlled hosted lifecycle, integration, privacy, concurrency and
+2. Import the published canonical manifest into FounderRoute and deploy the pinned
+   hosted script and self-service setup instructions.
+3. Run the controlled hosted lifecycle, integration, privacy, concurrency and
    recovery checks in production with beta controls still active. Dedicated staging
    and isolated capacity testing are explicitly deferred and must not be replaced
    by load testing production.
-6. Publish aligned candidate/stable artifacts, then lift beta restrictions only
-   after gates pass. Maintain legacy immutable artifacts and consent behavior.
+4. Lift beta restrictions for all four plan entitlements only after the controlled
+   smoke test passes. Maintain legacy immutable artifacts and consent behavior.
+5. Publish stable `1.0.0` after the hosted lifecycle gates pass.
 
-The protocol-2 database migration is live with beta controls unchanged. No registry
-publication, application deployment, or public-access expansion has been made.
+The protocol-2 database migration is live with beta controls unchanged. Candidate
+registry publication is complete; application deployment and public-access expansion
+have not been made.
 
 Staging discovery: on 2026-09-13, Supabase listed only stager and vibelint in the
 organization. The new-project tool quoted USD 0/month, but creation was rejected
@@ -56,15 +64,14 @@ the 10-million-event/load tests must not run against production.
 
 Private backend verification also passes the PostgreSQL-engine migration/replay/
 privacy/cohort suite with mixed v1/v2 events and preserved property defaults.
-Native automatic/refusal tests passed in CI. All six jobs passed at source
-578764e9905293020660d64e2106e8a71544948a:
-https://github.com/itsreed/founderroute-analytics/actions/runs/34775209342
+Native automatic/refusal tests passed in CI. The candidate source passed all six
+cross-platform jobs before publication.
 
 The private app now imports this revision's checksum-verified script and schemas,
 uses its manifest in installation prompts, and has removed its editable SDK copy.
 The app's 12 Analytics tests, type check, targeted lint and production build passed.
-Hosted backend/dashboard verification, broad conformance and public-release gates
-remain open. No registry publishing workflow has been dispatched.
+Hosted backend/dashboard verification, broad conformance and stable public-release
+gates remain open. Candidate registry publishing is complete.
 
 FounderRoute's canonical plan catalog enables Analytics for Free, Founder, Founder
 Pro and Founder Scale with the current owner-wide allowances of 1,000, 100,000,

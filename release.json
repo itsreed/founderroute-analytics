@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "version": "1.0.0-rc.1",
   "status": "candidate",
-  "published": false,
+  "published": true,
   "protocol": 2,
   "supportedProtocols": [
     1,
