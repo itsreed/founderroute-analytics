@@ -1,4 +1,4 @@
-name: Publish npm beta
+name: Publish npm release
 
 on:
   workflow_dispatch:
@@ -12,8 +12,8 @@ jobs:
     runs-on: ubuntu-latest
     environment: npm-release
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: "24"
           registry-url: https://registry.npmjs.org
@@ -21,6 +21,8 @@ jobs:
       - run: npm install --global npm@latest
       - run: npm ci --legacy-peer-deps
       - run: npm run release:check
+        env:
+          REQUIRE_RELEASE_TAG: "true"
       - run: npm run build
       - run: npm test
       - name: Inspect package contents
@@ -28,10 +30,5 @@ jobs:
           npm pack ./packages/browser --dry-run
           npm pack ./packages/node --dry-run
           npm pack ./packages/react-native --dry-run
-      - name: Publish beta packages
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: |
-          npm publish ./packages/browser --access public --tag beta
-          npm publish ./packages/node --access public --tag beta
-          npm publish ./packages/react-native --access public --tag beta
+      - name: Publish packages with the manifest distribution tag
+        run: node scripts/publish-npm.mjs

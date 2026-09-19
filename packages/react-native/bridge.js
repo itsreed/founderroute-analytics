@@ -3,8 +3,12 @@ export function createBridge(native, platform, options) {
   if (!native) throw new Error("Link FounderRoute's native module and rebuild the application.");
   const config = {...options, ...options[platform]};
   if (!config.key || !config.appId) throw new Error(`Register a ${platform} property and provide its public key and app ID.`);
-  native.configure(config.key, config.endpoint, config.appId, config.allowedProperties ?? [], config.allowedTraits ?? [],config.verificationId??null);
+  native.configure(config.key, config.endpoint, config.appId, config.allowedProperties ?? [], config.allowedTraits ?? [],config.verificationId??null, config.collectionMode??null, config.propertyId??null, config.environment??null);
   return {
+    optOut: () => native.optOut(),
+    optIn: () => native.optIn(),
+    setCollectionMode: mode => native.setCollectionMode(mode),
+    destroy: () => native.destroy(),
     setConsent: granted => native.setConsent(Boolean(granted)),
     identify: (id, {token, traits = {}} = {}) => native.identify(id, token ?? null, traits),
     setAccount: id => native.setAccount(id ?? null),

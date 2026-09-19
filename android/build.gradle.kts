@@ -8,7 +8,7 @@ plugins {
     id("signing")
 }
 group = "app.founderroute"
-version = "0.1.0-beta01"
+version = "1.0.0-rc.1"
 android {
     namespace = "com.founderroute.analytics"
     compileSdk = 35
@@ -37,7 +37,7 @@ afterEvaluate {
                 artifact(javadocJar)
                 artifactId = "analytics-android"
                 pom {
-                    name.set("FounderRoute Analytics"); description.set("Consent-first native FounderRoute analytics SDK")
+                    name.set("FounderRoute Analytics"); description.set("Native FounderRoute analytics SDK")
                     url.set("https://github.com/itsreed/founderroute-analytics")
                     licenses { license { name.set("MIT"); url.set("https://opensource.org/licenses/MIT") } }
                     developers { developer { id.set("founderroute"); name.set("FounderRoute"); url.set("https://founderroute.app") } }

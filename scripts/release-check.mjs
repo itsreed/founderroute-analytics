@@ -4,8 +4,9 @@ import process from "node:process";
 import { fileURLToPath } from "node:url";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const releaseVersion = "0.1.0-beta.1";
-const mavenVersion = "0.1.0-beta01";
+const release = JSON.parse(await readFile(path.join(root,"release.json"),"utf8"));
+const releaseVersion = release.version;
+const mavenVersion = release.maven.version;
 
 async function read(relativePath) {
   return readFile(path.join(root, relativePath), "utf8");
@@ -39,6 +40,9 @@ for (const [file, expected] of sourceVersions) {
   }
 }
 
+if (process.env.REQUIRE_RELEASE_TAG === "true" && process.env.GITHUB_REF_TYPE !== "tag") {
+  throw new Error("Publication must be dispatched against the tested release tag.");
+}
 if (process.env.GITHUB_REF_TYPE === "tag") {
   const expectedTag = `v${releaseVersion}`;
   if (process.env.GITHUB_REF_NAME !== expectedTag) {
@@ -46,4 +50,10 @@ if (process.env.GITHUB_REF_TYPE === "tag") {
   }
 }
 
+for (const [canonical, embedded] of [
+  ["ios/Sources/FounderRouteAnalytics/FounderRouteAnalytics.swift", "packages/react-native/ios/core/FounderRouteAnalytics.swift"],
+  ["android/src/main/java/com/founderroute/analytics/FounderRouteAnalytics.kt", "packages/react-native/android/src/main/java/com/founderroute/analytics/FounderRouteAnalytics.kt"],
+]) {
+  if (await read(canonical) !== await read(embedded)) throw new Error(`Generated native source drift: ${embedded}`);
+}
 console.log(`Release versions are aligned for ${releaseVersion}.`);

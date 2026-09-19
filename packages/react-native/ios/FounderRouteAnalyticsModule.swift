@@ -5,7 +5,11 @@ import React
 final class FounderRouteAnalyticsModule: NSObject {
     private let analytics = FounderRouteAnalytics.shared
     @objc static func requiresMainQueueSetup() -> Bool { false }
-    @objc func configure(_ key: String, endpoint: String, appId: String, properties: [String], traits: [String], verificationId: String?) { analytics.configure(key: key, endpoint: endpoint, appId: appId, allowedProperties: properties, allowedTraits: traits, verificationId: verificationId) }
+    @objc func configure(_ key: String, endpoint: String, appId: String, properties: [String], traits: [String], verificationId: String?, collectionMode: String?, propertyId: String?, environment: String?) { analytics.configure(key: key, endpoint: endpoint, appId: appId, allowedProperties: properties, allowedTraits: traits, verificationId: verificationId, collectionMode: collectionMode, propertyId: propertyId, environment: environment) }
+    @objc func optOut() { analytics.optOut() }
+    @objc func optIn() { analytics.optIn() }
+    @objc func setCollectionMode(_ mode: String) { analytics.setCollectionMode(mode) }
+    @objc func destroy() { analytics.destroy() }
     @objc func setConsent(_ value: Bool) { analytics.setConsent(value) }
     @objc func identify(_ id: String, token: String?, traits: [String: Any]) { analytics.identify(id, token: token, traits: traits) }
     @objc func setAccount(_ id: String?) { analytics.setAccount(id) }

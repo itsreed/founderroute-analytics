@@ -10,7 +10,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         // Replace only with a PUBLIC Android test-property key and your collector origin.
-        val analytics = FounderRouteAnalytics.init(applicationContext,"fr_pk_REPLACE_WITH_PUBLIC_TEST_KEY","https://collector.example.invalid",packageName)
+        val analytics = FounderRouteAnalytics.init(applicationContext,"fr_pk_REPLACE_WITH_PUBLIC_TEST_KEY","https://collector.example.invalid",packageName,collectionMode="automatic")
         setContent { MaterialTheme { AnalyticsExample(analytics) } }
     }
 }

@@ -21,7 +21,7 @@ class DeliveryTest {
     }
     @Test fun offlineRetryPreservesEventIdAndAcknowledgementClearsQueue() {
         val context=InstrumentationRegistry.getInstrumentation().targetContext
-        val client=FounderRouteAnalytics.init(context,"fr_pk_fixture_consent","https://collector.example","example.fixture")
+        val client=FounderRouteAnalytics.init(context,"fr_pk_fixture_consent","https://collector.example","example.fixture",collectionMode="consent",propertyId="fixture",environment="test")
         client.setConsent(false);diagnostics(client)
         var offline=true;val bodies=mutableListOf<JSONObject>()
         FounderRouteAnalytics.connectionFactory={url->object:HttpURLConnection(url){

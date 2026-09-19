@@ -1,15 +1,35 @@
 {
   "name": "@founderroute/analytics-react-native",
-  "version": "0.1.0-beta.1",
-  "description": "Consent-first FounderRoute analytics for React Native",
+  "version": "1.0.0-rc.1",
+  "description": "FounderRoute analytics for React Native",
   "license": "MIT",
   "type": "module",
   "main": "index.js",
   "types": "index.d.ts",
-  "files": ["*.js", "*.cjs", "*.d.ts", "*.podspec", "android", "ios", "LICENSE"],
-  "peerDependencies": {"react": ">=18 <20", "react-native": ">=0.76 <1"},
-  "repository": { "type": "git", "url": "git+https://github.com/itsreed/founderroute-analytics.git", "directory": "packages/react-native" },
+  "files": [
+    "*.js",
+    "*.cjs",
+    "*.d.ts",
+    "*.podspec",
+    "android",
+    "ios",
+    "LICENSE"
+  ],
+  "peerDependencies": {
+    "react": ">=18 <20",
+    "react-native": ">=0.76 <1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/itsreed/founderroute-analytics.git",
+    "directory": "packages/react-native"
+  },
   "homepage": "https://github.com/itsreed/founderroute-analytics#readme",
-  "bugs": { "url": "https://github.com/itsreed/founderroute-analytics/issues" },
-  "publishConfig": { "access": "public", "provenance": true }
+  "bugs": {
+    "url": "https://github.com/itsreed/founderroute-analytics/issues"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  }
 }

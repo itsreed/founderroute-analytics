@@ -1,3 +1,6 @@
 "use client";
 import { useEffect } from "react";
-export function FounderRouteConsent({ client, granted, children }) { useEffect(()=>{client.setConsent(granted);},[client,granted]);return children??null; }
+// Integrates an application-owned permission decision without rendering anything.
+export function useFounderRouteConsent(client, granted) {
+  useEffect(() => { client.setConsent(granted); }, [client, granted]);
+}

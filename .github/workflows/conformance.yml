@@ -6,8 +6,8 @@ jobs:
   browser:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: '22'
       - run: npm ci --legacy-peer-deps
@@ -21,16 +21,16 @@ jobs:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 45
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: '22'
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v6
         if: runner.os == 'Linux'
         with:
           distribution: temurin
           java-version: '17'
-      - uses: android-actions/setup-android@v3
+      - uses: android-actions/setup-android@v4
         if: runner.os == 'Linux'
       - name: Create consumer application from the packaged SDK
         shell: bash
@@ -65,17 +65,18 @@ jobs:
   javascript:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: '22'
       - run: npm run build
       - run: npm test
+      - run: npm run release:check
       - run: npm pack ./packages/browser --dry-run && npm pack ./packages/node --dry-run && npm pack ./packages/react-native --dry-run
   ios:
     runs-on: macos-15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - run: swift test
       - run: xcodebuild -scheme FounderRouteAnalytics -destination 'generic/platform=iOS Simulator' -sdk iphonesimulator CODE_SIGNING_ALLOWED=NO build
       - name: Build standalone SwiftUI and UIKit example
@@ -87,22 +88,22 @@ jobs:
   android:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: '17'
-      - uses: android-actions/setup-android@v3
+      - uses: android-actions/setup-android@v4
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.11.1'
       - name: Build Android release and Maven Central bundle layout
         run: |
           gradle --no-daemon -p android test assembleRelease publishReleasePublicationToCentralBundleRepository
-          test -f android/build/central-bundle/app/founderroute/analytics-android/0.1.0-beta01/analytics-android-0.1.0-beta01.aar
-          test -f android/build/central-bundle/app/founderroute/analytics-android/0.1.0-beta01/analytics-android-0.1.0-beta01-sources.jar
-          test -f android/build/central-bundle/app/founderroute/analytics-android/0.1.0-beta01/analytics-android-0.1.0-beta01-javadoc.jar
-          test -f android/build/central-bundle/app/founderroute/analytics-android/0.1.0-beta01/analytics-android-0.1.0-beta01.pom
+          test -f android/build/central-bundle/app/founderroute/analytics-android/1.0.0-rc.1/analytics-android-1.0.0-rc.1.aar
+          test -f android/build/central-bundle/app/founderroute/analytics-android/1.0.0-rc.1/analytics-android-1.0.0-rc.1-sources.jar
+          test -f android/build/central-bundle/app/founderroute/analytics-android/1.0.0-rc.1/analytics-android-1.0.0-rc.1-javadoc.jar
+          test -f android/build/central-bundle/app/founderroute/analytics-android/1.0.0-rc.1/analytics-android-1.0.0-rc.1.pom
       - name: Enable emulator acceleration
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules

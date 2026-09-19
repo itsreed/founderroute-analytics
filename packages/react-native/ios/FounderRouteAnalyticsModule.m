@@ -1,6 +1,10 @@
 #import <React/RCTBridgeModule.h>
 @interface RCT_EXTERN_MODULE(FounderRouteAnalyticsModule, NSObject)
-RCT_EXTERN_METHOD(configure:(NSString *)key endpoint:(NSString *)endpoint appId:(NSString *)appId properties:(NSArray *)properties traits:(NSArray *)traits verificationId:(NSString *)verificationId)
+RCT_EXTERN_METHOD(configure:(NSString *)key endpoint:(NSString *)endpoint appId:(NSString *)appId properties:(NSArray *)properties traits:(NSArray *)traits verificationId:(NSString *)verificationId collectionMode:(NSString *)collectionMode propertyId:(NSString *)propertyId environment:(NSString *)environment)
+RCT_EXTERN_METHOD(optOut)
+RCT_EXTERN_METHOD(optIn)
+RCT_EXTERN_METHOD(destroy)
+RCT_EXTERN_METHOD(setCollectionMode:(NSString *)mode)
 RCT_EXTERN_METHOD(setConsent:(BOOL)value)
 RCT_EXTERN_METHOD(identify:(NSString *)identifier token:(NSString *)token traits:(NSDictionary *)traits)
 RCT_EXTERN_METHOD(setAccount:(NSString *)identifier)

@@ -2,7 +2,7 @@
 
 MIT-licensed customer SDKs for FounderRoute's native analytics. This repository contains client code, protocol documentation, fixtures, and examples only.
 
-**Beta release.** Version 0.1.0-beta.1 is intended for controlled testing. Native build, offline/restart, cross-platform reconciliation, privacy, and production capacity gates must pass before stable publication.
+**Development branch.** The published beta is 0.1.0-beta.1. This branch implements the unpublished protocol 2 candidate (1.0.0-rc.1); its automatic-mode examples require a build from this branch and a v2 backend. Do not use these examples with the published beta packages. Native build, offline/restart, cross-platform reconciliation, privacy, and production capacity gates must pass before stable publication.
 
 | Platform | Source | Intended installation |
 | --- | --- | --- |
@@ -12,9 +12,9 @@ MIT-licensed customer SDKs for FounderRoute's native analytics. This repository 
 | iOS | `Package.swift` | Swift Package Manager repository URL, pin a release tag |
 | Android | `android` | `app.founderroute:analytics-android:0.1.0-beta01` |
 
-Run `npm run build` and `npm test`. Build creates the pinned browser script in `dist/0.1.0-beta.1/analytics.js` and packages the same native implementations into the React Native bridge. Do not also initialize a second native collector in a React Native application.
+Run `npm run build` and `npm test`. Build creates the candidate browser script in `dist/1.0.0-rc.1/analytics.js` and packages the same native implementations into the React Native bridge. Do not also initialize a second native collector in a React Native application.
 
-## Installation
+## Candidate installation behavior
 
 Create a property in FounderRoute → Analytics → Setup & health. Copy its **public** environment key and the collector origin displayed in the generated installation prompt. Use separate test and production keys. The collector origin is the HTTPS FounderRoute application origin, without an API path.
 
@@ -22,10 +22,11 @@ Create a property in FounderRoute → Analytics → Setup & health. Copy its **p
 import { init } from '@founderroute/analytics';
 const analytics = init({
   key: 'YOUR_PUBLIC_PROPERTY_KEY', endpoint: 'YOUR_COLLECTOR_ORIGIN',
+  propertyId: 'YOUR_PROPERTY_ID', environment: 'test', collectionMode: 'automatic',
   allowedProperties: ['feature'], allowedTraits: ['role'],
 });
-// Call only from the application's consent decision; never assume consent.
-consentManager.onChange(granted => analytics.setConsent(granted));
+// Automatic mode starts unless an explicit refusal is already stored.
+// Optional consent mode uses the customer's own CMP via setConsent(granted).
 // Use a route template when a URL contains customer-created or sensitive path segments.
 analytics.page('/projects/[projectId]/editor');
 analytics.identify(customer.id, { token: customer.analyticsAssertion, traits: { role: 'founder' } });
@@ -36,7 +37,9 @@ analytics.reset();
 
 Configure the same event and trait allowlists in FounderRoute. Unknown fields are discarded. No DOM clicks, form contents, advertising identifiers, screenshots, or replay are captured. Supply opaque customer IDs, never email addresses. Identity assertions come from your authenticated server; never embed server secrets in websites or installed apps.
 
-Before consent, no identity or event storage is read or written and no activity is sent or buffered. Withdrawal clears unsent events and local identity. Previously accepted events are removed with FounderRoute's separate deletion controls. Persist and restore your application consent decision appropriately after restart.
+Neither collection mode renders visitor-facing UI. `automatic` starts without a consent grant; `consent` starts paused until the customer application calls `setConsent(true)`. A minimal property/environment refusal record is read before either mode collects. Paused consent mode creates no analytics identity or queue and sends no activity. SDK configuration lookup may be needed when mode/property details are omitted.
+
+`optOut()` or `setConsent(false)` clears unsent events and identity and persists refusal. `optIn()` clears refusal but does not grant consent. `reset()` changes identity without changing permission; `destroy()` releases the instance without recording refusal. Refusals survive supported reloads and key rotation, but cannot survive storage being cleared or unavailable. Diagnostics expose storage failures. Previously accepted events use separate deletion controls. Legacy beta browser withdrawals may have erased all local preference evidence; existing installations remain consent-mode and the customer application must restore its actual decision.
 
 ## Confirmed server outcomes
 
@@ -44,7 +47,7 @@ Before consent, no identity or event storage is read or written and no activity 
 import {FounderRouteServer, signIdentity} from '@founderroute/analytics-node';
 const analytics = new FounderRouteServer({secret:process.env.FOUNDERROUTE_SECRET,endpoint:process.env.FOUNDERROUTE_ORIGIN});
 const event = analytics.event('signup_completed', {
-  consent: customer.analyticsConsent, userId: customer.id,
+  collectionMode: 'automatic', optedOut: customer.analyticsOptedOut, userId: customer.id,
   anonymousId: request.analyticsAnonymousId,
   eventId: outbox.analyticsEventId, outcomeId: `signup:${customer.id}`,
   occurredAt: customer.createdAt,
@@ -55,17 +58,17 @@ const receipt = await analytics.send([event]);
 const assertion = signIdentity({secret:process.env.FOUNDERROUTE_SECRET,propertyId:process.env.FOUNDERROUTE_PROPERTY,userId:customer.id});
 ```
 
-Signup means successful account creation, not login. Use matching `outcomeId` values for browser and server observations of the same successful action. Authentication and consent must be checked by your server before issuing an assertion or creating an event. Do not trust a user ID supplied in an unauthenticated request.
+Signup means successful account creation, not login. Use matching `outcomeId` values for browser and server observations of the same successful action. Authentication and each subject's collection preference must be checked by your server before issuing an assertion or creating an event. Do not trust a user ID supplied in an unauthenticated request.
 
 ## Delivery and diagnostics
 
 `flush()` attempts delivery; it does not promise completion after every app close. Read `getDiagnostics()` for queue, dropped, rejected, and acknowledged counts. Browser queues retain at most 1,000 events/1 MiB/24 hours. Mobile queues retain at most 10,000 events/10 MiB/seven days. The oldest events expire at the limit. A beacon submission does not remove events until a collector receipt arrives. Public receipts acknowledge durable acceptance, not completed report calculation.
 
-Android uses WorkManager with connectivity constraints and restores previously consented delivery after process restart. WorkManager remains subject to operating-system scheduling limits. iOS retries when the app is active and when lifecycle execution is permitted; force-quit delivery is not guaranteed. See [Android background work](https://developer.android.com/develop/background-work/background-tasks/persistent).
+Android uses WorkManager with connectivity constraints and restores previously permitted delivery after process restart. WorkManager remains subject to operating-system scheduling limits. iOS retries when the app is active and when lifecycle execution is permitted; force-quit delivery is not guaranteed. See [Android background work](https://developer.android.com/develop/background-work/background-tasks/persistent).
 
 ## Linking and campaigns
 
-Web page events capture allowlisted UTM fields and `fr_link`. Register both origins and the explicit destination-property binding before using `decorateLink(url, destinationPropertyId)`. After consent on the destination call `consumeHandoff(token)` using `fr_handoff`, then remove that parameter from the address bar. Tokens are opaque, single use, and expire in five minutes. Do not put user IDs in URLs. Installed mobile deep links must explicitly pass campaign context; deferred attribution through an app-store installation is outside this release.
+Web page events capture allowlisted UTM fields and `fr_link`. Register both origins and the explicit destination-property binding before using `decorateLink(url, destinationPropertyId)`. When collection is permitted on the destination, call `consumeHandoff(token)` using `fr_handoff`, then remove that parameter from the address bar. Tokens are opaque, single use, and expire in five minutes. Do not put user IDs in URLs. Installed mobile deep links must explicitly pass campaign context; deferred attribution through an app-store installation is outside this release.
 
 ## Native builds
 
@@ -79,10 +82,18 @@ The included Apple privacy manifest declares analytics product interaction and u
 2. Pass native build/device, offline/restart, consent, and server conformance tests.
 3. Pin compatible versions of every package and protocol fixture together.
 4. Publish npm packages, signed Maven artifacts, and an immutable Swift tag; attach the versioned script to the release and host it on the FounderRoute collector origin.
-5. Preserve the previous release for rollback. Stable publication follows FounderRoute staging reconciliation and capacity gates.
+5. Preserve the previous release for rollback. Stable publication follows the controlled hosted lifecycle and reconciliation checks. Dedicated staging and isolated capacity testing remain deferred; never substitute production load testing for those gates.
 
-## Publishing the beta
+## Publishing a tested release
 
-The `Publish npm beta` GitHub workflow publishes all three public npm packages together. The initial run uses a temporary `NPM_TOKEN` repository secret because npm can only attach a trusted publisher after a package exists. After the first run, configure each package to trust `itsreed/founderroute-analytics` and `publish-npm.yml`, then delete `NPM_TOKEN`; later runs use GitHub OIDC.
+The `Publish npm release` GitHub workflow publishes all three public npm packages together. Trusted publisher connections are already configured for `itsreed/founderroute-analytics`, workflow `publish-npm.yml`, environment `npm-release`. Publishing uses GitHub OIDC; do not recreate the obsolete bootstrap token. Candidate publishing configuration is being aligned before any release.
 
-The `Stage Maven Central beta` workflow builds and signs `app.founderroute:analytics-android:0.1.0-beta01`, then uploads it as a user-managed deployment. Configure the four documented Maven repository secrets first. A successful workflow stages the deployment for validation; the release becomes public only when a publisher approves it on Maven Central.
+The `Stage Maven Central release` workflow builds and signs the Maven coordinate in `release.json`, then uploads it as a user-managed deployment. Configure the four documented Maven repository secrets first. A successful workflow stages the deployment for validation; the release becomes public only when a publisher approves it on Maven Central.
+
+
+`release.json` defines exact candidate versions, protocol support and distribution
+tag. `npm run build` emits a checksum manifest beside the hosted script, recording
+its source commit and whether inputs were modified. `npm run release:check`
+rejects version or embedded native-source drift. Publishing workflows require the
+matching release tag; merely pushing a branch does not publish packages. Their
+trusted workflow filenames and GitHub environment bindings remain unchanged.
