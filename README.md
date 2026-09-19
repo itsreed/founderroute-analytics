@@ -2,15 +2,15 @@
 
 MIT-licensed customer SDKs for FounderRoute's native analytics. This repository contains client code, protocol documentation, fixtures, and examples only.
 
-**Development branch.** The published beta is 0.1.0-beta.1. This branch implements the unpublished protocol 2 candidate (1.0.0-rc.1); its automatic-mode examples require a build from this branch and a v2 backend. Do not use these examples with the published beta packages. Native build, offline/restart, cross-platform reconciliation, privacy, and production capacity gates must pass before stable publication.
+**Public release candidate.** Protocol 2 candidate `1.0.0-rc.1` is published for controlled production verification. Install the exact candidate version or npm `next` tag; npm `latest` remains on the previous beta until the hosted lifecycle and reconciliation gates pass. The release supports `automatic` and `consent` collection modes and requires FounderRoute's v2 backend.
 
 | Platform | Source | Intended installation |
 | --- | --- | --- |
-| Browser, React, Next.js | `packages/browser` | `@founderroute/analytics@0.1.0-beta.1` |
-| Node server | `packages/node` | `@founderroute/analytics-node@0.1.0-beta.1` |
-| React Native | `packages/react-native` | `@founderroute/analytics-react-native@0.1.0-beta.1` |
-| iOS | `Package.swift` | Swift Package Manager repository URL, pin a release tag |
-| Android | `android` | `app.founderroute:analytics-android:0.1.0-beta01` |
+| Browser, React, Next.js | `packages/browser` | `@founderroute/analytics@1.0.0-rc.1` |
+| Node server | `packages/node` | `@founderroute/analytics-node@1.0.0-rc.1` |
+| React Native | `packages/react-native` | `@founderroute/analytics-react-native@1.0.0-rc.1` |
+| iOS | `Package.swift` | Repository URL with exact tag `v1.0.0-rc.1` |
+| Android | `android` | `app.founderroute:analytics-android:1.0.0-rc.1` |
 
 Run `npm run build` and `npm test`. Build creates the candidate browser script in `dist/1.0.0-rc.1/analytics.js` and packages the same native implementations into the React Native bridge. Do not also initialize a second native collector in a React Native application.
 
@@ -86,9 +86,9 @@ The included Apple privacy manifest declares analytics product interaction and u
 
 ## Publishing a tested release
 
-The `Publish npm release` GitHub workflow publishes all three public npm packages together. Trusted publisher connections are already configured for `itsreed/founderroute-analytics`, workflow `publish-npm.yml`, environment `npm-release`. Publishing uses GitHub OIDC; do not recreate the obsolete bootstrap token. Candidate publishing configuration is being aligned before any release.
+The `Publish npm release` GitHub workflow publishes all three public npm packages together. Trusted publisher connections are configured for `itsreed/founderroute-analytics`, workflow `publish-npm.yml`, environment `npm-release`. Publishing uses GitHub OIDC; do not recreate the obsolete bootstrap token. Candidate `1.0.0-rc.1` is published under npm tag `next`; `latest` remains unchanged until stable release.
 
-The `Stage Maven Central release` workflow builds and signs the Maven coordinate in `release.json`, then uploads it as a user-managed deployment. Configure the four documented Maven repository secrets first. A successful workflow stages the deployment for validation; the release becomes public only when a publisher approves it on Maven Central.
+The `Stage Maven Central release` workflow builds and signs the Maven coordinate in `release.json`, then uploads it as a user-managed deployment. The environment-protected `Publish validated Maven deployment` workflow publishes only an exact validated deployment ID and waits for Maven Central to confirm completion. Candidate `app.founderroute:analytics-android:1.0.0-rc.1` is public.
 
 
 `release.json` defines exact candidate versions, protocol support and distribution
