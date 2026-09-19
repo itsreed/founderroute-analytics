@@ -9,8 +9,9 @@ await copy("ios/Sources/FounderRouteAnalytics/FounderRouteAnalytics.swift","pack
 await copy("ios/Sources/FounderRouteAnalytics/PrivacyInfo.xcprivacy","packages/react-native/ios/core/PrivacyInfo.xcprivacy");
 await copy("android/src/main/java/com/founderroute/analytics/FounderRouteAnalytics.kt","packages/react-native/android/src/main/java/com/founderroute/analytics/FounderRouteAnalytics.kt");
 for(const name of ["browser","node","react-native"])await copy("LICENSE",`packages/${name}/LICENSE`);
-const collection=await readFile(path.join(root,"packages/browser/collection.js"),"utf8");
-const browser=await readFile(path.join(root,"packages/browser/index.js"),"utf8");
+const normalizeNewlines=(value)=>value.replace(/\r\n?/g,"\n");
+const collection=normalizeNewlines(await readFile(path.join(root,"packages/browser/collection.js"),"utf8"));
+const browser=normalizeNewlines(await readFile(path.join(root,"packages/browser/index.js"),"utf8"));
 const version=JSON.parse(await readFile(path.join(root,"packages/browser/package.json"),"utf8")).version;
 await mkdir(path.join(root,"dist",version),{recursive:true});
 await writeFile(path.join(root,"dist",version,"analytics.js"),`(()=>{\n${collection.replaceAll("export ","")}\n${browser.replace('import { CollectionState } from "./collection.js";', "").replaceAll("export ","")}\nglobalThis.FounderRoute={init};\n})();\n`);

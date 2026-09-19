@@ -1,7 +1,8 @@
 # Public release implementation progress
 
-The public-release plan is in progress. Candidate `1.0.0-rc.1` is published for
-controlled production verification. It is not yet the stable public release.
+The public-release plan is in progress. Candidate `1.0.0-rc.2` supersedes the
+published `1.0.0-rc.1` candidate after fixing cross-platform hosted-script byte
+reproducibility. It is not yet the stable public release.
 
 ## Implemented
 
@@ -17,7 +18,7 @@ controlled production verification. It is not yet the stable public release.
 - Swift/Android collection modes and persistent refusal are implemented locally;
   React Native forwards the same configuration and controls through native bridges.
   Native builds and the implemented device tests passed in CI.
-- All candidate packages use 1.0.0-rc.1. release.json and the build integrity manifest
+- All candidate packages use 1.0.0-rc.2. release.json and the build integrity manifest
   pin source/version information; native-copy and version drift checks pass.
 
 ## Verified
