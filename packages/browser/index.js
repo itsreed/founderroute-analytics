@@ -1,5 +1,5 @@
 import { CollectionState } from "./collection.js";
-const VERSION = "1.0.0-rc.1";
+const VERSION = "1.0.0-rc.2";
 const MAX_BYTES = 1024 * 1024;
 const MAX_EVENTS = 1000;
 const TTL = 86400000;

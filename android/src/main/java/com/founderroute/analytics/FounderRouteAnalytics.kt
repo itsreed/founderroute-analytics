@@ -129,7 +129,7 @@ class FounderRouteAnalytics private constructor(private val context: Context, pr
     private fun enqueue(name:String,kind:String,properties:JSONObject,extra:JSONObject=JSONObject(),outcomeId:String?=null) {
         if(!consent||!permitted.get()||anonymousId==null)return
         val now=System.currentTimeMillis();if(now-lastActivity>=1800000)session=UUID.randomUUID().toString();lastActivity=now
-        val ctx=JSONObject().put("sdk","android").put("sdk_version","1.0.0-rc.1").put("app_id",appId);extra.keys().forEach { ctx.put(it,extra.get(it)) }
+        val ctx=JSONObject().put("sdk","android").put("sdk_version","1.0.0-rc.2").put("app_id",appId);extra.keys().forEach { ctx.put(it,extra.get(it)) }
         verificationId?.let{ctx.put("verification_id",it)}
         campaign.keys().forEach { ctx.put(it,campaign.get(it)) }
         val event=JSONObject().put("event_id",UUID.randomUUID().toString()).put("protocol",2).put("name",name).put("kind",kind).put("occurred_at",timestamp(now)).put("anonymous_id",anonymousId).put("session_id",session).put("collection_mode",collectionMode).put("consent_state",if(consentState=="granted")"granted" else "not_provided").put("properties",sanitize(properties,allowedProperties)).put("traits",sanitize(traits,allowedTraits)).put("context",ctx)

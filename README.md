@@ -2,17 +2,17 @@
 
 MIT-licensed customer SDKs for FounderRoute's native analytics. This repository contains client code, protocol documentation, fixtures, and examples only.
 
-**Public release candidate.** Protocol 2 candidate `1.0.0-rc.1` is published for controlled production verification. Install the exact candidate version or npm `next` tag; npm `latest` remains on the previous beta until the hosted lifecycle and reconciliation gates pass. The release supports `automatic` and `consent` collection modes and requires FounderRoute's v2 backend.
+**Public release candidate.** Protocol 2 candidate `1.0.0-rc.2` is prepared for controlled production verification. Install the exact candidate version or npm `next` tag after publication; npm `latest` remains on the previous beta until the hosted lifecycle and reconciliation gates pass. The release supports `automatic` and `consent` collection modes and requires FounderRoute's v2 backend. Candidate `1.0.0-rc.1` remains immutable and is superseded because its hosted-script build was not byte-reproducible across operating systems.
 
 | Platform | Source | Intended installation |
 | --- | --- | --- |
-| Browser, React, Next.js | `packages/browser` | `@founderroute/analytics@1.0.0-rc.1` |
-| Node server | `packages/node` | `@founderroute/analytics-node@1.0.0-rc.1` |
-| React Native | `packages/react-native` | `@founderroute/analytics-react-native@1.0.0-rc.1` |
-| iOS | `Package.swift` | Repository URL with exact tag `v1.0.0-rc.1` |
-| Android | `android` | `app.founderroute:analytics-android:1.0.0-rc.1` |
+| Browser, React, Next.js | `packages/browser` | `@founderroute/analytics@1.0.0-rc.2` |
+| Node server | `packages/node` | `@founderroute/analytics-node@1.0.0-rc.2` |
+| React Native | `packages/react-native` | `@founderroute/analytics-react-native@1.0.0-rc.2` |
+| iOS | `Package.swift` | Repository URL with exact tag `v1.0.0-rc.2` |
+| Android | `android` | `app.founderroute:analytics-android:1.0.0-rc.2` |
 
-Run `npm run build` and `npm test`. Build creates the candidate browser script in `dist/1.0.0-rc.1/analytics.js` and packages the same native implementations into the React Native bridge. Do not also initialize a second native collector in a React Native application.
+Run `npm run build` and `npm test`. Build creates the candidate browser script in `dist/1.0.0-rc.2/analytics.js` with normalized line endings and packages the same native implementations into the React Native bridge. Do not also initialize a second native collector in a React Native application.
 
 ## Candidate installation behavior
 
@@ -86,9 +86,9 @@ The included Apple privacy manifest declares analytics product interaction and u
 
 ## Publishing a tested release
 
-The `Publish npm release` GitHub workflow publishes all three public npm packages together. Trusted publisher connections are configured for `itsreed/founderroute-analytics`, workflow `publish-npm.yml`, environment `npm-release`. Publishing uses GitHub OIDC; do not recreate the obsolete bootstrap token. Candidate `1.0.0-rc.1` is published under npm tag `next`; `latest` remains unchanged until stable release.
+The `Publish npm release` GitHub workflow publishes all three public npm packages together. Trusted publisher connections are configured for `itsreed/founderroute-analytics`, workflow `publish-npm.yml`, environment `npm-release`. Publishing uses GitHub OIDC; do not recreate the obsolete bootstrap token. Candidate `1.0.0-rc.2` uses npm tag `next`; `latest` remains unchanged until stable release.
 
-The `Stage Maven Central release` workflow builds and signs the Maven coordinate in `release.json`, then uploads it as a user-managed deployment. The environment-protected `Publish validated Maven deployment` workflow publishes only an exact validated deployment ID and waits for Maven Central to confirm completion. Candidate `app.founderroute:analytics-android:1.0.0-rc.1` is public.
+The `Stage Maven Central release` workflow builds and signs the Maven coordinate in `release.json`, then uploads it as a user-managed deployment. The environment-protected `Publish validated Maven deployment` workflow publishes only an exact validated deployment ID and waits for Maven Central to confirm completion. Candidate `app.founderroute:analytics-android:1.0.0-rc.2` must reach `PUBLISHED` before it is imported into FounderRoute.
 
 
 `release.json` defines exact candidate versions, protocol support and distribution
