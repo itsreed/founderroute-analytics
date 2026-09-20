@@ -21,6 +21,14 @@ if(release.version!==version)throw new Error("Release manifest and browser versi
 const artifactPaths=[`dist/${version}/analytics.js`,"contract/event-v1.schema.json","contract/event-v2.schema.json","contract/limits-v1.json"];
 const integrity={};
 for(const artifact of artifactPaths) integrity[artifact]=createHash("sha256").update(await readFile(path.join(root,artifact))).digest("hex");
-const sourceCommit=execFileSync("git",["rev-parse","HEAD"],{cwd:root,encoding:"utf8"}).trim();
+const metadataCommit=execFileSync("git",["rev-parse","HEAD"],{cwd:root,encoding:"utf8"}).trim();
+let sourceCommit=metadataCommit;
+try {
+  sourceCommit=execFileSync("git",["rev-parse",`${release.tag}^{commit}`],{cwd:root,encoding:"utf8"}).trim();
+  const artifactDrift=execFileSync("git",["diff","--name-only",`${sourceCommit}..HEAD`,"--","packages","android/src","android/build.gradle.kts","ios/Sources","Package.swift","contract","package.json","package-lock.json"],{cwd:root,encoding:"utf8"}).trim();
+  if(artifactDrift)throw new Error(`Release artifacts differ from ${release.tag}: ${artifactDrift}`);
+} catch(error) {
+  if(release.published)throw error;
+}
 const sourceDirty=Boolean(execFileSync("git",["status","--porcelain","--","packages","android/src","ios/Sources","contract","scripts","release.json"],{cwd:root,encoding:"utf8"}).trim());
-await writeFile(path.join(root,"dist",version,"release-manifest.json"),JSON.stringify({...release,sourceCommit,sourceDirty,integrity},null,2)+"\n");
+await writeFile(path.join(root,"dist",version,"release-manifest.json"),JSON.stringify({...release,sourceCommit,metadataCommit,sourceDirty,integrity},null,2)+"\n");

@@ -28,14 +28,15 @@ reproducibility. It is not yet the stable public release.
   collection, including cross-tab refusal, reload/key rotation, lost acknowledgements,
   duplicate delivery, no SDK visitor UI, and normalized SPA navigation.
 - FounderRoute backend contract suite: 8 passed, including protocol 2 metadata.
-- Canonical merge commit `741e6bb6ca55ddee6ccce98f559f41f9b62a9bb6`
-  passed browser, JavaScript, iOS, Android emulator, and React Native Linux/macOS
-  CI: https://github.com/itsreed/founderroute-analytics/actions/runs/35462219925
-- npm packages were published under `next` and installed from the public registry.
-- Swift tag and GitHub prerelease `v1.0.0-rc.1` are public.
-- Signed Maven deployment `86fb1824-9b6e-4c47-a92c-0492f29bc9a6` reached
+- Candidate source `871a3d83afdbb878cfb8520a934b39cd603b70bd` passed
+  browser, JavaScript, iOS, Android emulator, and React Native Linux/macOS CI:
+  https://github.com/itsreed/founderroute-analytics/actions/runs/35477385963
+- npm `1.0.0-rc.2` packages were published under `next` and resolved from the
+  public registry. `latest` remains the previous beta.
+- Swift tag and GitHub prerelease `v1.0.0-rc.2` are public.
+- Signed Maven deployment `0544b63e-3f1f-48fd-9b35-a67e9a7eb287` reached
   `PUBLISHED`; the public POM returns HTTP 200 from Maven Central:
-  https://repo1.maven.org/maven2/app/founderroute/analytics-android/1.0.0-rc.1/analytics-android-1.0.0-rc.1.pom
+  https://repo1.maven.org/maven2/app/founderroute/analytics-android/1.0.0-rc.2/analytics-android-1.0.0-rc.2.pom
 
 ## Required next
 
