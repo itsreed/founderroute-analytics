@@ -1,6 +1,6 @@
 {
   "name": "@founderroute/analytics-react-native",
-  "version": "1.0.0-rc.2",
+  "version": "1.0.0",
   "description": "FounderRoute analytics for React Native",
   "license": "MIT",
   "type": "module",

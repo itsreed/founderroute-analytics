@@ -1,6 +1,6 @@
 {
   "name": "@founderroute/analytics-node",
-  "version": "1.0.0-rc.2",
+  "version": "1.0.0",
   "description": "FounderRoute server analytics SDK for verified outcomes and identity assertions",
   "type": "module",
   "main": "index.js",

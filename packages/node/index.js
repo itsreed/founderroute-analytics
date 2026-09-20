@@ -18,7 +18,7 @@ export class FounderRouteServer {
       ? {protocol:1,consent:true}
       : {protocol:2,collection_mode:mode,consent_state:granted?'granted':'not_provided'};
     if(!userId||!anonymousId)throw new Error("Pass a stable user ID and the originating anonymous ID.");
-    return {event_id:eventId,...collection,name,kind:"custom",occurred_at:occurredAt,anonymous_id:anonymousId,user_id:userId,...(outcomeId?{outcome_id:outcomeId}:{}),...(accountId?{account_id:accountId}:{}),traits,properties,context:{sdk:"node",sdk_version:"1.0.0-rc.2",...(verificationId?{verification_id:verificationId}:{})}};
+    return {event_id:eventId,...collection,name,kind:"custom",occurred_at:occurredAt,anonymous_id:anonymousId,user_id:userId,...(outcomeId?{outcome_id:outcomeId}:{}),...(accountId?{account_id:accountId}:{}),traits,properties,context:{sdk:"node",sdk_version:"1.0.0",...(verificationId?{verification_id:verificationId}:{})}};
   }
   async send(events) {
     const batch=events.filter(Boolean);if(!batch.length)return {results:[]};

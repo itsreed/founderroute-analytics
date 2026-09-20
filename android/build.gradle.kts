@@ -8,7 +8,7 @@ plugins {
     id("signing")
 }
 group = "app.founderroute"
-version = "1.0.0-rc.2"
+version = "1.0.0"
 android {
     namespace = "com.founderroute.analytics"
     compileSdk = 35
