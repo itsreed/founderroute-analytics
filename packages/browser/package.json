@@ -1,6 +1,6 @@
 {
   "name": "@founderroute/analytics",
-  "version": "1.0.0-rc.2",
+  "version": "1.0.0",
   "description": "FounderRoute analytics for browsers, React, and Next.js",
   "type": "module",
   "main": "index.js",

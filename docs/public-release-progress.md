@@ -1,8 +1,8 @@
 # Public release implementation progress
 
-The public-release plan is in progress. Candidate `1.0.0-rc.2` supersedes the
-published `1.0.0-rc.1` candidate after fixing cross-platform hosted-script byte
-reproducibility. It is not yet the stable public release.
+Stable `1.0.0` is prepared from the tested `1.0.0-rc.2` source after the live
+FounderRoute collector, scheduled worker, deduplication and workspace-deletion
+smoke journey passed in production. RC1 and RC2 remain immutable.
 
 ## Implemented
 
@@ -18,7 +18,7 @@ reproducibility. It is not yet the stable public release.
 - Swift/Android collection modes and persistent refusal are implemented locally;
   React Native forwards the same configuration and controls through native bridges.
   Native builds and the implemented device tests passed in CI.
-- All candidate packages use 1.0.0-rc.2. release.json and the build integrity manifest
+- All stable packages use 1.0.0. release.json and the build integrity manifest
   pin source/version information; native-copy and version drift checks pass.
 
 ## Verified
@@ -40,22 +40,16 @@ reproducibility. It is not yet the stable public release.
 
 ## Required next
 
-1. Deploy the private-app v2 routes and validate them against the hosted backend.
-   The additive protocol-2 migration is live and verified; the application routes
-   are not deployed yet.
-2. Import the published canonical manifest into FounderRoute and deploy the pinned
-   hosted script and self-service setup instructions.
-3. Run the controlled hosted lifecycle, integration, privacy, concurrency and
-   recovery checks in production with beta controls still active. Dedicated staging
-   and isolated capacity testing are explicitly deferred and must not be replaced
-   by load testing production.
-4. Lift beta restrictions for all four plan entitlements only after the controlled
-   smoke test passes. Maintain legacy immutable artifacts and consent behavior.
-5. Publish stable `1.0.0` after the hosted lifecycle gates pass.
+1. Run cross-platform conformance at the stable source revision.
+2. Publish stable npm, Swift and Maven artifacts without replacing RC1 or RC2.
+3. Mark the release manifest published, import it into FounderRoute and deploy the
+   immutable `/analytics/1.0.0/analytics.js` URL.
+4. Verify installation from each public registry and observe production health.
 
-The protocol-2 database migration is live with beta controls unchanged. Candidate
-registry publication is complete; application deployment and public-access expansion
-have not been made.
+Protocol 2 and the public-access migrations are live. FounderRoute serves the RC2
+hosted script, collection/dashboard access uses all four plan entitlements, and the
+database emergency pause remains independent. Cross-product synchronization stays
+disabled until its separate reconciliation gate passes.
 
 Staging discovery: on 2026-09-13, Supabase listed only stager and vibelint in the
 organization. The new-project tool quoted USD 0/month, but creation was rejected
@@ -69,11 +63,12 @@ privacy/cohort suite with mixed v1/v2 events and preserved property defaults.
 Native automatic/refusal tests passed in CI. The candidate source passed all six
 cross-platform jobs before publication.
 
-The private app now imports this revision's checksum-verified script and schemas,
+The private app now imports RC2's checksum-verified script and schemas,
 uses its manifest in installation prompts, and has removed its editable SDK copy.
-The app's 12 Analytics tests, type check, targeted lint and production build passed.
-Hosted backend/dashboard verification, broad conformance and stable public-release
-gates remain open. Candidate registry publishing is complete.
+The app's 13 Analytics tests, type check, targeted lint and production build passed.
+The live production smoke proved automatic configuration, durable acceptance,
+scheduled processing, verification exclusion, duplicate delivery and workspace
+deletion. Stable registry publication and stable-manifest import remain.
 
 FounderRoute's canonical plan catalog enables Analytics for Free, Founder, Founder
 Pro and Founder Scale with the current owner-wide allowances of 1,000, 100,000,
