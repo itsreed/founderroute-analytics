@@ -2,7 +2,7 @@
 
 MIT-licensed customer SDKs for FounderRoute's native analytics. This repository contains client code, protocol documentation, fixtures, and examples only.
 
-**Public release candidate.** Protocol 2 candidate `1.0.0-rc.2` is prepared for controlled production verification. Install the exact candidate version or npm `next` tag after publication; npm `latest` remains on the previous beta until the hosted lifecycle and reconciliation gates pass. The release supports `automatic` and `consent` collection modes and requires FounderRoute's v2 backend. Candidate `1.0.0-rc.1` remains immutable and is superseded because its hosted-script build was not byte-reproducible across operating systems.
+**Public release candidate.** Protocol 2 candidate `1.0.0-rc.2` is published for controlled production verification. Install the exact candidate version or npm `next` tag; npm `latest` remains on the previous beta until the hosted lifecycle and reconciliation gates pass. The release supports `automatic` and `consent` collection modes and requires FounderRoute's v2 backend. Candidate `1.0.0-rc.1` remains immutable and is superseded because its hosted-script build was not byte-reproducible across operating systems.
 
 | Platform | Source | Intended installation |
 | --- | --- | --- |
@@ -88,7 +88,7 @@ The included Apple privacy manifest declares analytics product interaction and u
 
 The `Publish npm release` GitHub workflow publishes all three public npm packages together. Trusted publisher connections are configured for `itsreed/founderroute-analytics`, workflow `publish-npm.yml`, environment `npm-release`. Publishing uses GitHub OIDC; do not recreate the obsolete bootstrap token. Candidate `1.0.0-rc.2` uses npm tag `next`; `latest` remains unchanged until stable release.
 
-The `Stage Maven Central release` workflow builds and signs the Maven coordinate in `release.json`, then uploads it as a user-managed deployment. The environment-protected `Publish validated Maven deployment` workflow publishes only an exact validated deployment ID and waits for Maven Central to confirm completion. Candidate `app.founderroute:analytics-android:1.0.0-rc.2` must reach `PUBLISHED` before it is imported into FounderRoute.
+The `Stage Maven Central release` workflow builds and signs the Maven coordinate in `release.json`, then uploads it as a user-managed deployment. The environment-protected `Publish validated Maven deployment` workflow publishes only an exact validated deployment ID and waits for Maven Central to confirm completion. Candidate `app.founderroute:analytics-android:1.0.0-rc.2` is public and reached `PUBLISHED` before its import into FounderRoute.
 
 
 `release.json` defines exact candidate versions, protocol support and distribution
