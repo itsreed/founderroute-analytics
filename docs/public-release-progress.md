@@ -1,6 +1,6 @@
 # Public release implementation progress
 
-Stable `1.0.0` is prepared from the tested `1.0.0-rc.2` source after the live
+Stable `1.0.0` was published from the tested release source after the live
 FounderRoute collector, scheduled worker, deduplication and workspace-deletion
 smoke journey passed in production. RC1 and RC2 remain immutable.
 
@@ -37,14 +37,22 @@ smoke journey passed in production. RC1 and RC2 remain immutable.
 - Signed Maven deployment `0544b63e-3f1f-48fd-9b35-a67e9a7eb287` reached
   `PUBLISHED`; the public POM returns HTTP 200 from Maven Central:
   https://repo1.maven.org/maven2/app/founderroute/analytics-android/1.0.0-rc.2/analytics-android-1.0.0-rc.2.pom
+- Stable source merge `1234c47ab9481012be5a20ff67c1391d94ac6751`
+  passed all twelve JavaScript, browser, iOS, Android and React Native CI checks.
+- npm `1.0.0` is public for `@founderroute/analytics`,
+  `@founderroute/analytics-node` and `@founderroute/analytics-react-native`, and
+  `latest` resolves to `1.0.0` for each package.
+- Swift tag and stable GitHub release `v1.0.0` are public.
+- Signed Maven deployment `4540ee4b-51bb-4de2-97d7-31eff6d00ba7` reached
+  `PUBLISHED`; the stable public POM returns HTTP 200 from Maven Central:
+  https://repo1.maven.org/maven2/app/founderroute/analytics-android/1.0.0/analytics-android-1.0.0.pom
 
 ## Required next
 
-1. Run cross-platform conformance at the stable source revision.
-2. Publish stable npm, Swift and Maven artifacts without replacing RC1 or RC2.
-3. Mark the release manifest published, import it into FounderRoute and deploy the
-   immutable `/analytics/1.0.0/analytics.js` URL.
-4. Verify installation from each public registry and observe production health.
+1. Import the published manifest into FounderRoute and deploy the immutable
+   `/analytics/1.0.0/analytics.js` URL.
+2. Verify the hosted checksum and a production installation against the stable URL.
+3. Observe production health during the public rollout.
 
 Protocol 2 and the public-access migrations are live. FounderRoute serves the RC2
 hosted script, collection/dashboard access uses all four plan entitlements, and the
@@ -63,12 +71,12 @@ privacy/cohort suite with mixed v1/v2 events and preserved property defaults.
 Native automatic/refusal tests passed in CI. The candidate source passed all six
 cross-platform jobs before publication.
 
-The private app now imports RC2's checksum-verified script and schemas,
+The private app currently imports RC2's checksum-verified script and schemas,
 uses its manifest in installation prompts, and has removed its editable SDK copy.
 The app's 13 Analytics tests, type check, targeted lint and production build passed.
 The live production smoke proved automatic configuration, durable acceptance,
 scheduled processing, verification exclusion, duplicate delivery and workspace
-deletion. Stable registry publication and stable-manifest import remain.
+deletion. Stable registry publication is complete; stable-manifest import remains.
 
 FounderRoute's canonical plan catalog enables Analytics for Free, Founder, Founder
 Pro and Founder Scale with the current owner-wide allowances of 1,000, 100,000,
